@@ -21,3 +21,4 @@ bld/
 
 # Coverage
 *.opencover.xml
+*.userprefs
