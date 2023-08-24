@@ -16,35 +16,39 @@ namespace DiscordChatExporter.Cli.Commands;
 [Command("exportall", Description = "Exports all accessible channels.")]
 public class ExportAllCommand : ExportCommandBase
 {
-    [CommandOption(
-        "include-dm",
-        Description = "Include direct message channels."
-    )]
+    [CommandOption("include-dm", Description = "Include direct message channels.")]
     public bool IncludeDirectChannels { get; init; } = true;
 
-    [CommandOption(
-        "include-guilds",
-        Description = "Include guild channels."
-    )]
+    [CommandOption("include-guilds", Description = "Include guild channels.")]
     public bool IncludeGuildChannels { get; init; } = true;
 
-    [CommandOption(
-        "include-vc",
-        Description = "Include voice channels."
-    )]
+    [CommandOption("include-vc", Description = "Include voice channels.")]
     public bool IncludeVoiceChannels { get; init; } = true;
+
+    [CommandOption("include-threads", Description = "Include threads.")]
+    public bool IncludeThreads { get; init; } = false;
+
+    [CommandOption("include-archived-threads", Description = "Include archived threads.")]
+    public bool IncludeArchivedThreads { get; init; } = false;
 
     [CommandOption(
         "data-package",
-        Description =
-            "Path to the personal data package (ZIP file) requested from Discord. " +
-            "If provided, only channels referenced in the dump will be exported."
+        Description = "Path to the personal data package (ZIP file) requested from Discord. "
+            + "If provided, only channels referenced in the dump will be exported."
     )]
     public string? DataPackageFilePath { get; init; }
 
     public override async ValueTask ExecuteAsync(IConsole console)
     {
         await base.ExecuteAsync(console);
+
+        // Cannot include archived threads without including active threads as well
+        if (IncludeArchivedThreads && !IncludeThreads)
+        {
+            throw new CommandException(
+                "Option --include-archived-threads can only be used when --include-threads is also specified."
+            );
+        }
 
         var cancellationToken = console.RegisterCancellationHandler();
         var channels = new List<Channel>();
@@ -56,9 +60,33 @@ public class ExportAllCommand : ExportCommandBase
 
             await foreach (var guild in Discord.GetUserGuildsAsync(cancellationToken))
             {
-                await foreach (var channel in Discord.GetGuildChannelsAsync(guild.Id, cancellationToken))
+                // Regular channels
+                await foreach (
+                    var channel in Discord.GetGuildChannelsAsync(guild.Id, cancellationToken)
+                )
                 {
+                    if (channel.Kind == ChannelKind.GuildCategory)
+                        continue;
+
+                    if (!IncludeVoiceChannels && channel.Kind.IsVoice())
+                        continue;
+
                     channels.Add(channel);
+                }
+
+                // Threads
+                if (IncludeThreads)
+                {
+                    await foreach (
+                        var thread in Discord.GetGuildThreadsAsync(
+                            guild.Id,
+                            IncludeArchivedThreads,
+                            cancellationToken
+                        )
+                    )
+                    {
+                        channels.Add(thread);
+                    }
                 }
             }
         }
@@ -84,7 +112,9 @@ public class ExportAllCommand : ExportCommandBase
                 if (channelName is null)
                     continue;
 
-                await console.Output.WriteLineAsync($"Fetching channel '{channelName}' ({channelId})...");
+                await console.Output.WriteLineAsync(
+                    $"Fetching channel '{channelName}' ({channelId})..."
+                );
 
                 try
                 {
@@ -93,7 +123,9 @@ public class ExportAllCommand : ExportCommandBase
                 }
                 catch (DiscordChatExporterException)
                 {
-                    await console.Error.WriteLineAsync($"Channel '{channelName}' ({channelId}) is inaccessible.");
+                    await console.Error.WriteLineAsync(
+                        $"Channel '{channelName}' ({channelId}) is inaccessible."
+                    );
                 }
             }
         }
@@ -105,7 +137,11 @@ public class ExportAllCommand : ExportCommandBase
             channels.RemoveAll(c => c.Kind.IsGuild());
         if (!IncludeVoiceChannels)
             channels.RemoveAll(c => c.Kind.IsVoice());
+        if (!IncludeThreads)
+            channels.RemoveAll(c => c.Kind.IsThread());
+        if (!IncludeArchivedThreads)
+            channels.RemoveAll(c => c.Kind.IsThread() && c.IsArchived);
 
-        await base.ExecuteAsync(console, channels);
+        await ExportAsync(console, channels);
     }
 }

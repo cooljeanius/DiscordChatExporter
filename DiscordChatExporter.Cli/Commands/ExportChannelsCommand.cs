@@ -14,15 +14,14 @@ public class ExportChannelsCommand : ExportCommandBase
     [CommandOption(
         "channel",
         'c',
-        Description =
-            "Channel ID(s). " +
-            "If provided with category ID(s), all channels inside those categories will be exported."
+        Description = "Channel ID(s). "
+            + "If provided with category ID(s), all channels inside those categories will be exported."
     )]
     public required IReadOnlyList<Snowflake> ChannelIds { get; init; }
 
     public override async ValueTask ExecuteAsync(IConsole console)
     {
         await base.ExecuteAsync(console);
-        await base.ExecuteAsync(console, ChannelIds);
+        await ExportAsync(console, ChannelIds);
     }
 }

@@ -14,9 +14,13 @@ public class GetDirectChannelsCommand : DiscordCommandBase
 {
     public override async ValueTask ExecuteAsync(IConsole console)
     {
+        await base.ExecuteAsync(console);
+
         var cancellationToken = console.RegisterCancellationHandler();
 
-        var channels = (await Discord.GetGuildChannelsAsync(Guild.DirectMessages.Id, cancellationToken))
+        var channels = (
+            await Discord.GetGuildChannelsAsync(Guild.DirectMessages.Id, cancellationToken)
+        )
             .Where(c => c.Kind != ChannelKind.GuildCategory)
             .OrderByDescending(c => c.LastMessageId)
             .ThenBy(c => c.Name)

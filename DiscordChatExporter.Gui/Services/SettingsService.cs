@@ -16,6 +16,10 @@ public partial class SettingsService : SettingsBase
 
     public bool IsTokenPersisted { get; set; } = true;
 
+    public bool ShouldShowThreads { get; set; }
+
+    public bool ShouldShowArchivedThreads { get; set; }
+
     public string DateFormat { get; set; } = "MM/dd/yyyy h:mm tt";
 
     public int ParallelLimit { get; set; } = 1;
@@ -39,9 +43,7 @@ public partial class SettingsService : SettingsBase
     public string? LastAssetsDirPath { get; set; }
 
     public SettingsService()
-        : base(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Settings.dat"))
-    {
-    }
+        : base(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Settings.dat")) { }
 
     public override void Save()
     {
@@ -62,10 +64,13 @@ public partial class SettingsService
     {
         try
         {
-            return Registry.CurrentUser.OpenSubKey(
-                "SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Themes\\Personalize",
-                false
-            )?.GetValue("AppsUseLightTheme") is 0;
+            return Registry.CurrentUser
+                .OpenSubKey(
+                    "SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Themes\\Personalize",
+                    false
+                )
+                ?.GetValue("AppsUseLightTheme")
+                is 0;
         }
         catch
         {

@@ -14,17 +14,16 @@ namespace DiscordChatExporter.Core.Exporting;
 
 internal class ExportContext
 {
-    private readonly Dictionary<Snowflake, Member?> _members = new();
-    private readonly Dictionary<Snowflake, Channel> _channels = new();
-    private readonly Dictionary<Snowflake, Role> _roles = new();
+    private readonly Dictionary<Snowflake, Member?> _membersById = new();
+    private readonly Dictionary<Snowflake, Channel> _channelsById = new();
+    private readonly Dictionary<Snowflake, Role> _rolesById = new();
     private readonly ExportAssetDownloader _assetDownloader;
 
     public DiscordClient Discord { get; }
 
     public ExportRequest Request { get; }
 
-    public ExportContext(DiscordClient discord,
-        ExportRequest request)
+    public ExportContext(DiscordClient discord, ExportRequest request)
     {
         Discord = discord;
         Request = request;
@@ -35,22 +34,27 @@ internal class ExportContext
         );
     }
 
-    public async ValueTask PopulateChannelsAndRolesAsync(CancellationToken cancellationToken = default)
+    public async ValueTask PopulateChannelsAndRolesAsync(
+        CancellationToken cancellationToken = default
+    )
     {
-        await foreach (var channel in Discord.GetGuildChannelsAsync(Request.Guild.Id, cancellationToken))
-            _channels[channel.Id] = channel;
+        await foreach (
+            var channel in Discord.GetGuildChannelsAsync(Request.Guild.Id, cancellationToken)
+        )
+            _channelsById[channel.Id] = channel;
 
         await foreach (var role in Discord.GetGuildRolesAsync(Request.Guild.Id, cancellationToken))
-            _roles[role.Id] = role;
+            _rolesById[role.Id] = role;
     }
 
     // Because members cannot be pulled in bulk, we need to populate them on demand
     private async ValueTask PopulateMemberAsync(
         Snowflake id,
         User? fallbackUser,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default
+    )
     {
-        if (_members.ContainsKey(id))
+        if (_membersById.ContainsKey(id))
             return;
 
         var member = await Discord.TryGetGuildMemberAsync(Request.Guild.Id, id, cancellationToken);
@@ -67,41 +71,47 @@ internal class ExportContext
         }
 
         // Store the result even if it's null, to avoid re-fetching non-existing members
-        _members[id] = member;
+        _membersById[id] = member;
     }
 
-    public async ValueTask PopulateMemberAsync(Snowflake id, CancellationToken cancellationToken = default) =>
-        await PopulateMemberAsync(id, null, cancellationToken);
+    public async ValueTask PopulateMemberAsync(
+        Snowflake id,
+        CancellationToken cancellationToken = default
+    ) => await PopulateMemberAsync(id, null, cancellationToken);
 
-    public async ValueTask PopulateMemberAsync(User user, CancellationToken cancellationToken = default) =>
-        await PopulateMemberAsync(user.Id, user, cancellationToken);
+    public async ValueTask PopulateMemberAsync(
+        User user,
+        CancellationToken cancellationToken = default
+    ) => await PopulateMemberAsync(user.Id, user, cancellationToken);
 
-    public string FormatDate(DateTimeOffset instant) => Request.DateFormat switch
-    {
-        "unix" => instant.ToUnixTimeSeconds().ToString(),
-        "unixms" => instant.ToUnixTimeMilliseconds().ToString(),
-        var format => instant.ToLocalString(format)
-    };
+    public string FormatDate(DateTimeOffset instant) =>
+        Request.DateFormat switch
+        {
+            "unix" => instant.ToUnixTimeSeconds().ToString(),
+            "unixms" => instant.ToUnixTimeMilliseconds().ToString(),
+            var format => instant.ToLocalString(format)
+        };
 
-    public Member? TryGetMember(Snowflake id) => _members.GetValueOrDefault(id);
+    public Member? TryGetMember(Snowflake id) => _membersById.GetValueOrDefault(id);
 
-    public Channel? TryGetChannel(Snowflake id) => _channels.GetValueOrDefault(id);
+    public Channel? TryGetChannel(Snowflake id) => _channelsById.GetValueOrDefault(id);
 
-    public Role? TryGetRole(Snowflake id) => _roles.GetValueOrDefault(id);
+    public Role? TryGetRole(Snowflake id) => _rolesById.GetValueOrDefault(id);
 
-    public IReadOnlyList<Role> GetUserRoles(Snowflake id) => TryGetMember(id)?
-        .RoleIds
-        .Select(TryGetRole)
-        .WhereNotNull()
-        .OrderByDescending(r => r.Position)
-        .ToArray() ?? Array.Empty<Role>();
+    public IReadOnlyList<Role> GetUserRoles(Snowflake id) =>
+        TryGetMember(id)?.RoleIds
+            .Select(TryGetRole)
+            .WhereNotNull()
+            .OrderByDescending(r => r.Position)
+            .ToArray() ?? Array.Empty<Role>();
 
-    public Color? TryGetUserColor(Snowflake id) => GetUserRoles(id)
-        .Where(r => r.Color is not null)
-        .Select(r => r.Color)
-        .FirstOrDefault();
+    public Color? TryGetUserColor(Snowflake id) =>
+        GetUserRoles(id).Where(r => r.Color is not null).Select(r => r.Color).FirstOrDefault();
 
-    public async ValueTask<string> ResolveAssetUrlAsync(string url, CancellationToken cancellationToken = default)
+    public async ValueTask<string> ResolveAssetUrlAsync(
+        string url,
+        CancellationToken cancellationToken = default
+    )
     {
         if (!Request.ShouldDownloadAssets)
             return url;
@@ -114,8 +124,14 @@ internal class ExportContext
             // Prefer relative paths so that the output files can be copied around without breaking references.
             // If the asset directory is outside of the export directory, use an absolute path instead.
             var optimalFilePath =
-                relativeFilePath.StartsWith(".." + Path.DirectorySeparatorChar, StringComparison.Ordinal) ||
-                relativeFilePath.StartsWith(".." + Path.AltDirectorySeparatorChar, StringComparison.Ordinal)
+                relativeFilePath.StartsWith(
+                    ".." + Path.DirectorySeparatorChar,
+                    StringComparison.Ordinal
+                )
+                || relativeFilePath.StartsWith(
+                    ".." + Path.AltDirectorySeparatorChar,
+                    StringComparison.Ordinal
+                )
                     ? filePath
                     : relativeFilePath;
 

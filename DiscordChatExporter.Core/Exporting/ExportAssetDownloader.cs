@@ -15,17 +15,18 @@ namespace DiscordChatExporter.Core.Exporting;
 
 internal partial class ExportAssetDownloader
 {
-    private static readonly AsyncKeyedLocker<string> Locker = new(o =>
-    {
-        o.PoolSize = 20;
-        o.PoolInitialFill = 1;
-    });
+    private static readonly AsyncKeyedLocker<string> Locker =
+        new(o =>
+        {
+            o.PoolSize = 20;
+            o.PoolInitialFill = 1;
+        });
 
     private readonly string _workingDirPath;
     private readonly bool _reuse;
 
     // File paths of the previously downloaded assets
-    private readonly Dictionary<string, string> _pathCache = new(StringComparer.Ordinal);
+    private readonly Dictionary<string, string> _previousPathsByUrl = new(StringComparer.Ordinal);
 
     public ExportAssetDownloader(string workingDirPath, bool reuse)
     {
@@ -33,19 +34,22 @@ internal partial class ExportAssetDownloader
         _reuse = reuse;
     }
 
-    public async ValueTask<string> DownloadAsync(string url, CancellationToken cancellationToken = default)
+    public async ValueTask<string> DownloadAsync(
+        string url,
+        CancellationToken cancellationToken = default
+    )
     {
         var fileName = GetFileNameFromUrl(url);
         var filePath = Path.Combine(_workingDirPath, fileName);
 
         using var _ = await Locker.LockAsync(filePath, cancellationToken);
 
-        if (_pathCache.TryGetValue(url, out var cachedFilePath))
+        if (_previousPathsByUrl.TryGetValue(url, out var cachedFilePath))
             return cachedFilePath;
 
         // Reuse existing files if we're allowed to
         if (_reuse && File.Exists(filePath))
-            return _pathCache[url] = filePath;
+            return _previousPathsByUrl[url] = filePath;
 
         Directory.CreateDirectory(_workingDirPath);
 
@@ -59,11 +63,19 @@ internal partial class ExportAssetDownloader
             // Try to set the file date according to the last-modified header
             try
             {
-                var lastModified = response.Content.Headers.TryGetValue("Last-Modified")?.Pipe(s =>
-                    DateTimeOffset.TryParse(s, CultureInfo.InvariantCulture, DateTimeStyles.None, out var instant)
-                        ? instant
-                        : (DateTimeOffset?)null
-                );
+                var lastModified = response.Content.Headers
+                    .TryGetValue("Last-Modified")
+                    ?.Pipe(
+                        s =>
+                            DateTimeOffset.TryParse(
+                                s,
+                                CultureInfo.InvariantCulture,
+                                DateTimeStyles.None,
+                                out var instant
+                            )
+                                ? instant
+                                : (DateTimeOffset?)null
+                    );
 
                 if (lastModified is not null)
                 {
@@ -80,17 +92,18 @@ internal partial class ExportAssetDownloader
             }
         });
 
-        return _pathCache[url] = filePath;
+        return _previousPathsByUrl[url] = filePath;
     }
 }
 
 internal partial class ExportAssetDownloader
 {
-    private static string GetUrlHash(string url) => SHA256
-        .HashData(Encoding.UTF8.GetBytes(url))
-        .ToHex()
-        // 5 chars ought to be enough for anybody
-        .Truncate(5);
+    private static string GetUrlHash(string url) =>
+        SHA256
+            .HashData(Encoding.UTF8.GetBytes(url))
+            .ToHex()
+            // 5 chars ought to be enough for anybody
+            .Truncate(5);
 
     private static string GetFileNameFromUrl(string url)
     {
@@ -115,6 +128,8 @@ internal partial class ExportAssetDownloader
             fileExtension = "";
         }
 
-        return PathEx.EscapeFileName(fileNameWithoutExtension.Truncate(42) + '-' + urlHash + fileExtension);
+        return PathEx.EscapeFileName(
+            fileNameWithoutExtension.Truncate(42) + '-' + urlHash + fileExtension
+        );
     }
 }

@@ -2,6 +2,7 @@
 using System.Linq;
 using System.Threading.Tasks;
 using CliFx.Attributes;
+using CliFx.Exceptions;
 using CliFx.Infrastructure;
 using DiscordChatExporter.Cli.Commands.Base;
 using DiscordChatExporter.Core.Discord;
@@ -13,25 +14,35 @@ namespace DiscordChatExporter.Cli.Commands;
 [Command("channels", Description = "Get the list of channels in a guild.")]
 public class GetChannelsCommand : DiscordCommandBase
 {
-    [CommandOption(
-        "guild",
-        'g',
-        Description = "Guild ID."
-    )]
+    [CommandOption("guild", 'g', Description = "Guild ID.")]
     public required Snowflake GuildId { get; init; }
 
-    [CommandOption(
-        "include-threads",
-        Description = "Include threads in the output."
-    )]
-    public bool IncludeThreads { get; init; }
+    [CommandOption("include-vc", Description = "Include voice channels.")]
+    public bool IncludeVoiceChannels { get; init; } = true;
+
+    [CommandOption("include-threads", Description = "Include threads.")]
+    public bool IncludeThreads { get; init; } = false;
+
+    [CommandOption("include-archived-threads", Description = "Include archived threads.")]
+    public bool IncludeArchivedThreads { get; init; } = false;
 
     public override async ValueTask ExecuteAsync(IConsole console)
     {
+        await base.ExecuteAsync(console);
+
+        // Cannot include archived threads without including active threads as well
+        if (IncludeArchivedThreads && !IncludeThreads)
+        {
+            throw new CommandException(
+                "Option --include-archived-threads can only be used when --include-threads is also specified."
+            );
+        }
+
         var cancellationToken = console.RegisterCancellationHandler();
 
         var channels = (await Discord.GetGuildChannelsAsync(GuildId, cancellationToken))
             .Where(c => c.Kind != ChannelKind.GuildCategory)
+            .Where(c => IncludeVoiceChannels || !c.Kind.IsVoice())
             .OrderBy(c => c.Parent?.Position)
             .ThenBy(c => c.Name)
             .ToArray();
@@ -42,7 +53,15 @@ public class GetChannelsCommand : DiscordCommandBase
             .FirstOrDefault();
 
         var threads = IncludeThreads
-            ? (await Discord.GetGuildThreadsAsync(GuildId, cancellationToken)).OrderBy(c => c.Name).ToArray()
+            ? (
+                await Discord.GetGuildThreadsAsync(
+                    GuildId,
+                    IncludeArchivedThreads,
+                    cancellationToken
+                )
+            )
+                .OrderBy(c => c.Name)
+                .ToArray()
             : Array.Empty<Channel>();
 
         foreach (var channel in channels)
@@ -90,7 +109,9 @@ public class GetChannelsCommand : DiscordCommandBase
 
                 // Thread status
                 using (console.WithForegroundColor(ConsoleColor.White))
-                    await console.Output.WriteLineAsync(channelThread.IsActive ? "Active" : "Archived");
+                    await console.Output.WriteLineAsync(
+                        channelThread.IsArchived ? "Archived" : "Active"
+                    );
             }
         }
     }

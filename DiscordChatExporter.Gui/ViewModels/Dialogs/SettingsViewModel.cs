@@ -26,6 +26,18 @@ public class SettingsViewModel : DialogScreen
         set => _settingsService.IsTokenPersisted = value;
     }
 
+    public bool ShouldShowThreads
+    {
+        get => _settingsService.ShouldShowThreads;
+        set => _settingsService.ShouldShowThreads = value;
+    }
+
+    public bool ShouldShowArchivedThreads
+    {
+        get => _settingsService.ShouldShowArchivedThreads;
+        set => _settingsService.ShouldShowArchivedThreads = value;
+    }
+
     public string DateFormat
     {
         get => _settingsService.DateFormat;
@@ -38,6 +50,5 @@ public class SettingsViewModel : DialogScreen
         set => _settingsService.ParallelLimit = Math.Clamp(value, 1, 10);
     }
 
-    public SettingsViewModel(SettingsService settingsService) =>
-        _settingsService = settingsService;
+    public SettingsViewModel(SettingsService settingsService) => _settingsService = settingsService;
 }
