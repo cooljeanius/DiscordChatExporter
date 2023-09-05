@@ -6,6 +6,8 @@ using CliFx.Attributes;
 using CliFx.Exceptions;
 using CliFx.Infrastructure;
 using DiscordChatExporter.Cli.Commands.Base;
+using DiscordChatExporter.Cli.Commands.Converters;
+using DiscordChatExporter.Cli.Commands.Shared;
 using DiscordChatExporter.Core.Discord;
 using DiscordChatExporter.Core.Discord.Data;
 using DiscordChatExporter.Core.Exceptions;
@@ -25,11 +27,12 @@ public class ExportAllCommand : ExportCommandBase
     [CommandOption("include-vc", Description = "Include voice channels.")]
     public bool IncludeVoiceChannels { get; init; } = true;
 
-    [CommandOption("include-threads", Description = "Include threads.")]
-    public bool IncludeThreads { get; init; } = false;
-
-    [CommandOption("include-archived-threads", Description = "Include archived threads.")]
-    public bool IncludeArchivedThreads { get; init; } = false;
+    [CommandOption(
+        "include-threads",
+        Description = "Which types of threads should be included.",
+        Converter = typeof(ThreadInclusionModeBindingConverter)
+    )]
+    public ThreadInclusionMode ThreadInclusionMode { get; init; } = ThreadInclusionMode.None;
 
     [CommandOption(
         "data-package",
@@ -41,14 +44,6 @@ public class ExportAllCommand : ExportCommandBase
     public override async ValueTask ExecuteAsync(IConsole console)
     {
         await base.ExecuteAsync(console);
-
-        // Cannot include archived threads without including active threads as well
-        if (IncludeArchivedThreads && !IncludeThreads)
-        {
-            throw new CommandException(
-                "Option --include-archived-threads can only be used when --include-threads is also specified."
-            );
-        }
 
         var cancellationToken = console.RegisterCancellationHandler();
         var channels = new List<Channel>();
@@ -75,12 +70,14 @@ public class ExportAllCommand : ExportCommandBase
                 }
 
                 // Threads
-                if (IncludeThreads)
+                if (ThreadInclusionMode != ThreadInclusionMode.None)
                 {
                     await foreach (
                         var thread in Discord.GetGuildThreadsAsync(
                             guild.Id,
-                            IncludeArchivedThreads,
+                            ThreadInclusionMode == ThreadInclusionMode.All,
+                            Before,
+                            After,
                             cancellationToken
                         )
                     )
@@ -137,9 +134,9 @@ public class ExportAllCommand : ExportCommandBase
             channels.RemoveAll(c => c.Kind.IsGuild());
         if (!IncludeVoiceChannels)
             channels.RemoveAll(c => c.Kind.IsVoice());
-        if (!IncludeThreads)
+        if (ThreadInclusionMode == ThreadInclusionMode.None)
             channels.RemoveAll(c => c.Kind.IsThread());
-        if (!IncludeArchivedThreads)
+        if (ThreadInclusionMode != ThreadInclusionMode.All)
             channels.RemoveAll(c => c.Kind.IsThread() && c.IsArchived);
 
         await ExportAsync(console, channels);

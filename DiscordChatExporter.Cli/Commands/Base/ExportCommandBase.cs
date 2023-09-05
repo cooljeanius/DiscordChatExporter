@@ -18,6 +18,7 @@ using DiscordChatExporter.Core.Exporting.Partitioning;
 using DiscordChatExporter.Core.Utils;
 using DiscordChatExporter.Core.Utils.Extensions;
 using Gress;
+using Spectre.Console;
 
 namespace DiscordChatExporter.Cli.Commands.Base;
 
@@ -147,12 +148,10 @@ public abstract class ExportCommandBase : DiscordCommandBase
         var isValidOutputPath =
             // Anything is valid when exporting a single channel
             channels.Count <= 1
-            ||
             // When using template tokens, assume the user knows what they're doing
-            OutputPath.Contains('%')
-            ||
+            || OutputPath.Contains('%')
             // Otherwise, require an existing directory or an unambiguous directory path
-            Directory.Exists(OutputPath)
+            || Directory.Exists(OutputPath)
             || PathEx.IsDirectoryPath(OutputPath);
 
         if (!isValidOutputPath)
@@ -170,6 +169,12 @@ public abstract class ExportCommandBase : DiscordCommandBase
         await console.Output.WriteLineAsync($"Exporting {channels.Count} channel(s)...");
         await console
             .CreateProgressTicker()
+            .HideCompleted(
+                // When exporting multiple channels in parallel, hide the completed tasks
+                // because it gets hard to visually parse them as they complete out of order.
+                // https://github.com/Tyrrrz/DiscordChatExporter/issues/1124
+                ParallelLimit > 1
+            )
             .StartAsync(async progressContext =>
             {
                 await Parallel.ForEachAsync(
@@ -184,7 +189,7 @@ public abstract class ExportCommandBase : DiscordCommandBase
                         try
                         {
                             await progressContext.StartTaskAsync(
-                                $"{channel.Category} / {channel.Name}",
+                                $"{channel.ParentNameWithFallback} / {channel.Name}",
                                 async progress =>
                                 {
                                     var guild = await Discord.GetGuildAsync(
@@ -246,7 +251,9 @@ public abstract class ExportCommandBase : DiscordCommandBase
 
             foreach (var (channel, error) in errorsByChannel)
             {
-                await console.Error.WriteAsync($"{channel.Category} / {channel.Name}: ");
+                await console.Error.WriteAsync(
+                    $"{channel.ParentNameWithFallback} / {channel.Name}: "
+                );
 
                 using (console.WithForegroundColor(ConsoleColor.Red))
                     await console.Error.WriteLineAsync(error);
