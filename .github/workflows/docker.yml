@@ -31,8 +31,10 @@ jobs:
           path: DiscordChatExporter.Cli.Docker.tar
 
   deploy-latest:
-    if: ${{ github.event_name == 'push' && github.ref_type == 'branch' && github.ref_name == 'master' }}
     runs-on: ubuntu-latest
+    env:
+      DOCKER_TOKEN: ${{ secrets.DOCKER_TOKEN }}
+    if: ${{ github.event_name == 'push' && github.ref_type == 'branch' && github.ref_name == 'master' && vars.DOCKER_TOKEN != '' }}
     permissions:
       contents: read
 
