@@ -119,7 +119,7 @@ jobs:
           -DestinationPath DiscordChatExporter.zip
           -Force
 
-      - name: Create release
+      - name: Upload release asset
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: >
