@@ -12,7 +12,7 @@ FROM --platform=$BUILDPLATFORM mcr.microsoft.com/dotnet/sdk:8.0-preview AS build
 # we can build the assembly for the correct platform.
 ARG TARGETARCH
 
-WORKDIR /build
+WORKDIR /tmp/dce
 
 COPY favicon.ico .
 COPY NuGet.config .
@@ -22,16 +22,23 @@ COPY DiscordChatExporter.Cli DiscordChatExporter.Cli
 
 # Publish a self-contained assembly so we can use a slimmer runtime image
 RUN dotnet publish DiscordChatExporter.Cli \
-    --configuration Release \
     -p:CSharpier_Bypass=true \
+    --configuration Release \
     --self-contained \
     --use-current-runtime \
     --arch $TARGETARCH \
-    --output publish/
+    --output DiscordChatExporter.Cli/bin/publish/
 
 # -- Run
 # Use `runtime-deps` instead of `runtime` because we have a self-contained assembly
 FROM --platform=$TARGETPLATFORM mcr.microsoft.com/dotnet/runtime-deps:7.0 AS run
+
+LABEL org.opencontainers.image.title="DiscordChatExporter.CLI"
+LABEL org.opencontainers.image.description="DiscordChatExporter is an application that can be used to export message history from any Discord channel to a file."
+LABEL org.opencontainers.image.authors="tyrrrz.me"
+LABEL org.opencontainers.image.url="https://github.com/Tyrrrz/DiscordChatExporter"
+LABEL org.opencontainers.image.source="https://github.com/Tyrrrz/DiscordChatExporter/blob/master/DiscordChatExporter.Cli.dockerfile"
+LABEL org.opencontainers.image.licenses="MIT"
 
 # Create a non-root user to run the app, so that the output files can be accessed by the host
 # https://github.com/Tyrrrz/DiscordChatExporter/issues/851
@@ -42,5 +49,5 @@ USER dce
 # stays the same for backwards compatibility.
 WORKDIR /out
 
-COPY --from=build /build/publish /opt/dce
+COPY --from=build /tmp/dce/DiscordChatExporter.Cli/bin/publish /opt/dce
 ENTRYPOINT ["/opt/dce/DiscordChatExporter.Cli"]
