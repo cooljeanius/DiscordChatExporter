@@ -27,6 +27,7 @@ jobs:
         if: ${{ github.event_name != 'pull_request' && env.DISCORD_TOKEN != '' }}
         run: >
           dotnet test
+          -p:CSharpier_Bypass=true
           --configuration Release
           --logger "GitHubActions;summary.includePassedTests=true;summary.includeSkippedTests=true"
           --collect:"XPlat Code Coverage"
