@@ -4,6 +4,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using MaterialDesignThemes.Wpf;
 using Microsoft.Win32;
+using Ookii.Dialogs.Wpf;
 using Stylet;
 
 namespace DiscordChatExporter.Gui.ViewModels.Framework;
@@ -67,8 +68,9 @@ public class DialogManager : IDisposable
 
     public string? PromptDirectoryPath(string defaultDirPath = "")
     {
-        var dialog = new OpenFolderDialog { InitialDirectory = defaultDirPath };
-        return dialog.ShowDialog() == true ? dialog.FolderName : null;
+        var dialog = new VistaFolderBrowserDialog { SelectedPath = defaultDirPath };
+
+        return dialog.ShowDialog() == true ? dialog.SelectedPath : null;
     }
 
     public void Dispose()
