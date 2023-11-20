@@ -31,7 +31,7 @@ RUN dotnet publish DiscordChatExporter.Cli \
 
 # -- Run
 # Use `runtime-deps` instead of `runtime` because we have a self-contained assembly
-FROM --platform=$TARGETPLATFORM mcr.microsoft.com/dotnet/runtime-deps:7.0 AS run
+FROM --platform=$TARGETPLATFORM mcr.microsoft.com/dotnet/runtime-deps:8.0 AS run
 
 LABEL org.opencontainers.image.title="DiscordChatExporter.CLI"
 LABEL org.opencontainers.image.description="DiscordChatExporter is an application that can be used to export message history from any Discord channel to a file."
