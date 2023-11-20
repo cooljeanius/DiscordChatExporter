@@ -40,10 +40,12 @@ public class DiscordClient
 
                 // Don't validate because the token can have special characters
                 // https://github.com/Tyrrrz/DiscordChatExporter/issues/828
-                request.Headers.TryAddWithoutValidation(
-                    "Authorization",
-                    tokenKind == TokenKind.Bot ? $"Bot {_token}" : _token
-                );
+                request
+                    .Headers
+                    .TryAddWithoutValidation(
+                        "Authorization",
+                        tokenKind == TokenKind.Bot ? $"Bot {_token}" : _token
+                    );
 
                 var response = await Http.Client.SendAsync(
                     request,
@@ -58,11 +60,13 @@ public class DiscordClient
                 // require properly keeping track of Discord's global/per-route/per-resource
                 // rate limits and that's just way too much effort.
                 // https://discord.com/developers/docs/topics/rate-limits
-                var remainingRequestCount = response.Headers
+                var remainingRequestCount = response
+                    .Headers
                     .TryGetValue("X-RateLimit-Remaining")
                     ?.Pipe(s => int.Parse(s, CultureInfo.InvariantCulture));
 
-                var resetAfterDelay = response.Headers
+                var resetAfterDelay = response
+                    .Headers
                     .TryGetValue("X-RateLimit-Reset-After")
                     ?.Pipe(s => double.Parse(s, CultureInfo.InvariantCulture))
                     .Pipe(TimeSpan.FromSeconds);
@@ -614,7 +618,7 @@ public class DiscordClient
                 if (!application.IsMessageContentIntentEnabled)
                 {
                     throw new DiscordChatExporterException(
-                        "Bot account does not have the Message Content Intent enabled.",
+                        "Provided bot account does not have the Message Content Intent enabled.",
                         true
                     );
                 }

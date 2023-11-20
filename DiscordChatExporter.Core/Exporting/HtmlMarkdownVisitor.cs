@@ -12,18 +12,15 @@ using DiscordChatExporter.Core.Utils.Extensions;
 
 namespace DiscordChatExporter.Core.Exporting;
 
-internal partial class HtmlMarkdownVisitor : MarkdownVisitor
+internal partial class HtmlMarkdownVisitor(
+    ExportContext context,
+    StringBuilder buffer,
+    bool isJumbo
+) : MarkdownVisitor
 {
-    private readonly ExportContext _context;
-    private readonly StringBuilder _buffer;
-    private readonly bool _isJumbo;
-
-    public HtmlMarkdownVisitor(ExportContext context, StringBuilder buffer, bool isJumbo)
-    {
-        _context = context;
-        _buffer = buffer;
-        _isJumbo = isJumbo;
-    }
+    private readonly ExportContext _context = context;
+    private readonly StringBuilder _buffer = buffer;
+    private readonly bool _isJumbo = isJumbo;
 
     protected override ValueTask VisitTextAsync(
         TextNode text,
@@ -196,7 +193,8 @@ internal partial class HtmlMarkdownVisitor : MarkdownVisitor
         // Try to extract the message ID if the link points to a Discord message
         var linkedMessageId = Regex
             .Match(link.Url, @"^https?://(?:discord|discordapp)\.com/channels/.*?/(\d+)/?$")
-            .Groups[1].Value;
+            .Groups[1]
+            .Value;
 
         _buffer.Append(
             !string.IsNullOrWhiteSpace(linkedMessageId)

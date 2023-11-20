@@ -6,19 +6,14 @@ using DiscordChatExporter.Core.Discord.Data;
 
 namespace DiscordChatExporter.Core.Exporting;
 
-internal partial class MessageExporter : IAsyncDisposable
+internal partial class MessageExporter(ExportContext context) : IAsyncDisposable
 {
-    private readonly ExportContext _context;
+    private readonly ExportContext _context = context;
 
     private int _partitionIndex;
     private MessageWriter? _writer;
 
     public long MessagesExported { get; private set; }
-
-    public MessageExporter(ExportContext context)
-    {
-        _context = context;
-    }
 
     private async ValueTask ResetWriterAsync(CancellationToken cancellationToken = default)
     {
@@ -44,10 +39,10 @@ internal partial class MessageExporter : IAsyncDisposable
         // Ensure that the partition limit has not been reached
         if (
             _writer is not null
-            && _context.Request.PartitionLimit.IsReached(
-                _writer.MessagesWritten,
-                _writer.BytesWritten
-            )
+            && _context
+                .Request
+                .PartitionLimit
+                .IsReached(_writer.MessagesWritten, _writer.BytesWritten)
         )
         {
             await ResetWriterAsync(cancellationToken);

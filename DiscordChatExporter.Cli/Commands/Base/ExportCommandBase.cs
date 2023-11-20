@@ -16,7 +16,6 @@ using DiscordChatExporter.Core.Exceptions;
 using DiscordChatExporter.Core.Exporting;
 using DiscordChatExporter.Core.Exporting.Filtering;
 using DiscordChatExporter.Core.Exporting.Partitioning;
-using DiscordChatExporter.Core.Utils;
 using DiscordChatExporter.Core.Utils.Extensions;
 using Gress;
 using Spectre.Console;
@@ -163,13 +162,14 @@ public abstract class ExportCommandBase : DiscordCommandBase
             || OutputPath.Contains('%')
             // Otherwise, require an existing directory or an unambiguous directory path
             || Directory.Exists(OutputPath)
-            || PathEx.IsDirectoryPath(OutputPath);
+            || Path.EndsInDirectorySeparator(OutputPath);
 
         if (!isValidOutputPath)
         {
             throw new CommandException(
                 "Attempted to export multiple channels, but the output path is neither a directory nor a template. "
-                    + "If the provided output path is meant to be treated as a directory, make sure it ends with a slash."
+                    + "If the provided output path is meant to be treated as a directory, make sure it ends with a slash. "
+                    + $"Provided output path: '{OutputPath}'."
             );
         }
 
@@ -244,9 +244,11 @@ public abstract class ExportCommandBase : DiscordCommandBase
         // Print the result
         using (console.WithForegroundColor(ConsoleColor.White))
         {
-            await console.Output.WriteLineAsync(
-                $"Successfully exported {channels.Count - errorsByChannel.Count} channel(s)."
-            );
+            await console
+                .Output
+                .WriteLineAsync(
+                    $"Successfully exported {channels.Count - errorsByChannel.Count} channel(s)."
+                );
         }
 
         // Print errors
@@ -256,9 +258,11 @@ public abstract class ExportCommandBase : DiscordCommandBase
 
             using (console.WithForegroundColor(ConsoleColor.Red))
             {
-                await console.Error.WriteLineAsync(
-                    $"Failed to export {errorsByChannel.Count} the following channel(s):"
-                );
+                await console
+                    .Error
+                    .WriteLineAsync(
+                        $"Failed to export {errorsByChannel.Count} the following channel(s):"
+                    );
             }
 
             foreach (var (channel, error) in errorsByChannel)
@@ -320,33 +324,51 @@ public abstract class ExportCommandBase : DiscordCommandBase
         // Support Ukraine callout
         if (!IsUkraineSupportMessageDisabled)
         {
-            console.Output.WriteLine(
-                "┌────────────────────────────────────────────────────────────────────┐"
-            );
-            console.Output.WriteLine(
-                "│   Thank you for supporting Ukraine <3                              │"
-            );
-            console.Output.WriteLine(
-                "│                                                                    │"
-            );
-            console.Output.WriteLine(
-                "│   As Russia wages a genocidal war against my country,              │"
-            );
-            console.Output.WriteLine(
-                "│   I'm grateful to everyone who continues to                        │"
-            );
-            console.Output.WriteLine(
-                "│   stand with Ukraine in our fight for freedom.                     │"
-            );
-            console.Output.WriteLine(
-                "│                                                                    │"
-            );
-            console.Output.WriteLine(
-                "│   Learn more: https://tyrrrz.me/ukraine                            │"
-            );
-            console.Output.WriteLine(
-                "└────────────────────────────────────────────────────────────────────┘"
-            );
+            console
+                .Output
+                .WriteLine(
+                    "┌────────────────────────────────────────────────────────────────────┐"
+                );
+            console
+                .Output
+                .WriteLine(
+                    "│   Thank you for supporting Ukraine <3                              │"
+                );
+            console
+                .Output
+                .WriteLine(
+                    "│                                                                    │"
+                );
+            console
+                .Output
+                .WriteLine(
+                    "│   As Russia wages a genocidal war against my country,              │"
+                );
+            console
+                .Output
+                .WriteLine(
+                    "│   I'm grateful to everyone who continues to                        │"
+                );
+            console
+                .Output
+                .WriteLine(
+                    "│   stand with Ukraine in our fight for freedom.                     │"
+                );
+            console
+                .Output
+                .WriteLine(
+                    "│                                                                    │"
+                );
+            console
+                .Output
+                .WriteLine(
+                    "│   Learn more: https://tyrrrz.me/ukraine                            │"
+                );
+            console
+                .Output
+                .WriteLine(
+                    "└────────────────────────────────────────────────────────────────────┘"
+                );
             console.Output.WriteLine("");
         }
 
