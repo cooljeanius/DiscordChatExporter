@@ -42,8 +42,8 @@ LABEL org.opencontainers.image.licenses="MIT"
 
 # Alpine image doesn't come with the ICU libraries pre-installed, so we need to install them manually.
 # We need the full ICU data because we allow the user to specify any locale for formatting purposes.
-RUN apk add --no-cache icu-libs
-RUN apk add --no-cache icu-data-full
+RUN if test -x "$(which apk)"; then apk add --no-cache icu-libs; else echo "no apk (1)"; fi
+RUN if test -x "$(which apk)"; then apk add --no-cache icu-data-full; else echo "no apk (2)"; fi
 ENV DOTNET_SYSTEM_GLOBALIZATION_INVARIANT=false
 ENV LC_ALL=en_US.UTF-8
 ENV LANG=en_US.UTF-8
