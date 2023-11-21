@@ -3,11 +3,14 @@
 .idea/
 *.suo
 *.user
+*.userprefs
 
 # Build results
 bin/
 obj/
 
+# Coverage
+*.opencover.xml
+
 # Test results
 TestResults/
-*.userprefs
