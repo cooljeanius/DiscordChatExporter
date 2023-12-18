@@ -70,13 +70,13 @@ jobs:
           --configuration Release
 
       - name: Upload artifacts (CLI)
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: DiscordChatExporter.Cli
           path: DiscordChatExporter.Cli/publish/
 
       - name: Upload artifacts (GUI)
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: DiscordChatExporter
           path: DiscordChatExporter.Gui/publish/
