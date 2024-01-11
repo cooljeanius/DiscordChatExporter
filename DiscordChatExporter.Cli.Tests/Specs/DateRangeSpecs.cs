@@ -27,7 +27,7 @@ public class DateRangeSpecs
         await new ExportChannelsCommand
         {
             Token = Secrets.DiscordToken,
-            ChannelIds = new[] { ChannelIds.DateRangeTestCases },
+            ChannelIds = [ChannelIds.DateRangeTestCases],
             ExportFormat = ExportFormat.Json,
             OutputPath = file.Path,
             After = Snowflake.FromDate(after)
@@ -45,14 +45,13 @@ public class DateRangeSpecs
         timestamps
             .Should()
             .BeEquivalentTo(
-                new[]
-                {
+                [
                     new DateTimeOffset(2021, 07, 24, 13, 49, 13, TimeSpan.Zero),
                     new DateTimeOffset(2021, 07, 24, 14, 52, 38, TimeSpan.Zero),
                     new DateTimeOffset(2021, 07, 24, 14, 52, 39, TimeSpan.Zero),
                     new DateTimeOffset(2021, 07, 24, 14, 52, 40, TimeSpan.Zero),
                     new DateTimeOffset(2021, 09, 08, 14, 26, 35, TimeSpan.Zero)
-                },
+                ],
                 o =>
                 {
                     return o.Using<DateTimeOffset>(
@@ -77,7 +76,7 @@ public class DateRangeSpecs
         await new ExportChannelsCommand
         {
             Token = Secrets.DiscordToken,
-            ChannelIds = new[] { ChannelIds.DateRangeTestCases },
+            ChannelIds = [ChannelIds.DateRangeTestCases],
             ExportFormat = ExportFormat.Json,
             OutputPath = file.Path,
             Before = Snowflake.FromDate(before)
@@ -95,12 +94,11 @@ public class DateRangeSpecs
         timestamps
             .Should()
             .BeEquivalentTo(
-                new[]
-                {
+                [
                     new DateTimeOffset(2021, 07, 19, 13, 34, 18, TimeSpan.Zero),
                     new DateTimeOffset(2021, 07, 19, 15, 58, 48, TimeSpan.Zero),
                     new DateTimeOffset(2021, 07, 19, 17, 23, 58, TimeSpan.Zero)
-                },
+                ],
                 o =>
                 {
                     return o.Using<DateTimeOffset>(
@@ -126,7 +124,7 @@ public class DateRangeSpecs
         await new ExportChannelsCommand
         {
             Token = Secrets.DiscordToken,
-            ChannelIds = new[] { ChannelIds.DateRangeTestCases },
+            ChannelIds = [ChannelIds.DateRangeTestCases],
             ExportFormat = ExportFormat.Json,
             OutputPath = file.Path,
             Before = Snowflake.FromDate(before),
@@ -145,13 +143,12 @@ public class DateRangeSpecs
         timestamps
             .Should()
             .BeEquivalentTo(
-                new[]
-                {
+                [
                     new DateTimeOffset(2021, 07, 24, 13, 49, 13, TimeSpan.Zero),
                     new DateTimeOffset(2021, 07, 24, 14, 52, 38, TimeSpan.Zero),
                     new DateTimeOffset(2021, 07, 24, 14, 52, 39, TimeSpan.Zero),
                     new DateTimeOffset(2021, 07, 24, 14, 52, 40, TimeSpan.Zero)
-                },
+                ],
                 o =>
                 {
                     return o.Using<DateTimeOffset>(
