@@ -26,7 +26,7 @@ public class HtmlGroupingSpecs
         await new ExportChannelsCommand
         {
             Token = Secrets.DiscordToken,
-            ChannelIds = [ChannelIds.GroupingTestCases],
+            ChannelIds = new[] { ChannelIds.GroupingTestCases },
             ExportFormat = ExportFormat.HtmlDark,
             OutputPath = file.Path
         }.ExecuteAsync(new FakeConsole());

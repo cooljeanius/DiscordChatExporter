@@ -24,7 +24,7 @@ public class SelfContainedSpecs
         await new ExportChannelsCommand
         {
             Token = Secrets.DiscordToken,
-            ChannelIds = [ChannelIds.SelfContainedTestCases],
+            ChannelIds = new[] { ChannelIds.SelfContainedTestCases },
             ExportFormat = ExportFormat.HtmlDark,
             OutputPath = filePath,
             ShouldDownloadAssets = true
