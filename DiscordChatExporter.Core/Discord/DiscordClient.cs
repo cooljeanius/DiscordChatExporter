@@ -675,10 +675,14 @@ public class DiscordClient
                 .SetQueryParameter("after", currentAfter.ToString())
                 .Build();
 
-            var response = await GetJsonResponseAsync(url, cancellationToken);
+            // Can be null on reactions with an emoji that has been deleted (?)
+            // https://github.com/Tyrrrz/DiscordChatExporter/issues/1226
+            var response = await TryGetJsonResponseAsync(url, cancellationToken);
+            if (response is null)
+                yield break;
 
             var count = 0;
-            foreach (var userJson in response.EnumerateArray())
+            foreach (var userJson in response.Value.EnumerateArray())
             {
                 var user = User.Parse(userJson);
                 yield return user;
