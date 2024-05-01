@@ -88,6 +88,9 @@ The following table lists all available download options:
   </tbody>
 </table>
 
+> **Note**:
+> If you're unsure which build is right for your system, consult with [this page](https://useragent.cc) to determine your OS and CPU architecture.
+
 > **Important**:
 > To run **DiscordChatExporter**, you need to make sure that the **.NET 8.0 Runtime** is installed.
 > You can download it here:
