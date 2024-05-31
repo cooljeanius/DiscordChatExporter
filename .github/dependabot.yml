@@ -8,12 +8,30 @@ updates:
   - package-ecosystem: "nuget" # See documentation for possible values
     directory: "/" # Location of package manifests
     schedule:
-      interval: "weekly"
+      interval: monthly
+    labels:
+      - enhancement
+    groups:
+      nuget:
+        patterns:
+          - "*"
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
-      interval: "weekly"
+      interval: monthly
+    labels:
+      - enhancement
+    groups:
+      actions:
+        patterns:
+          - "*"
   - package-ecosystem: "docker"
     directory: "/"
     schedule:
-      interval: "weekly"
+      interval: monthly
+    labels:
+      - enhancement
+    groups:
+      docker:
+        patterns:
+          - "*"
