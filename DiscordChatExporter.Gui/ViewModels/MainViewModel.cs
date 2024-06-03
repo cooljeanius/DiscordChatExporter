@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics;
 using System.Threading.Tasks;
 using Avalonia;
 using CommunityToolkit.Mvvm.Input;
@@ -46,6 +47,30 @@ public partial class MainViewModel(
             ProcessEx.StartShellExecute("https://tyrrrz.me/ukraine?source=discordchatexporter");
     }
 
+    private async Task ShowDevelopmentBuildMessageAsync()
+    {
+        if (!Program.IsDevelopmentBuild)
+            return;
+
+        // If debugging, the user is likely a developer
+        if (Debugger.IsAttached)
+            return;
+
+        var dialog = viewModelManager.CreateMessageBoxViewModel(
+            "Unstable build warning",
+            """
+            You're using a development build of the application. These builds are not thoroughly tested and may contain bugs.
+
+            Auto-updates are disabled for development builds. If you want to switch to a stable release, please download it manually.
+            """,
+            "SEE RELEASES",
+            "CLOSE"
+        );
+
+        if (await dialogManager.ShowDialogAsync(dialog) == true)
+            ProcessEx.StartShellExecute(Program.ProjectReleasesUrl);
+    }
+
     private async Task CheckForUpdatesAsync()
     {
         try
@@ -79,19 +104,8 @@ public partial class MainViewModel(
     [RelayCommand]
     private async Task InitializeAsync()
     {
-        // Reset settings (needed to resolve the default dark mode setting)
-        settingsService.Reset();
-
-        // Load settings
-        settingsService.Load();
-
-        // Set the correct theme
-        if (settingsService.IsDarkModeEnabled)
-            App.SetDarkTheme();
-        else
-            App.SetLightTheme();
-
         await ShowUkraineSupportMessageAsync();
+        await ShowDevelopmentBuildMessageAsync();
         await CheckForUpdatesAsync();
     }
 
