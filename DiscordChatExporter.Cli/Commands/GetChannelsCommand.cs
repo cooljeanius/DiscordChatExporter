@@ -7,6 +7,7 @@ using DiscordChatExporter.Cli.Commands.Base;
 using DiscordChatExporter.Cli.Commands.Converters;
 using DiscordChatExporter.Cli.Commands.Shared;
 using DiscordChatExporter.Core.Discord;
+using DiscordChatExporter.Core.Discord.Data;
 using DiscordChatExporter.Core.Utils.Extensions;
 
 namespace DiscordChatExporter.Cli.Commands;
@@ -58,7 +59,7 @@ public class GetChannelsCommand : DiscordCommandBase
                 )
                     .OrderBy(c => c.Name)
                     .ToArray()
-                : [];
+                : Array.Empty<Channel>();
 
         foreach (var channel in channels)
         {

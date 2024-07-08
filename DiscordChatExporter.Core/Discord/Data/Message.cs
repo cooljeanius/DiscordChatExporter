@@ -144,28 +144,28 @@ public partial record Message
             json.GetPropertyOrNull("attachments")
                 ?.EnumerateArrayOrNull()
                 ?.Select(Attachment.Parse)
-                .ToArray() ?? [];
+                .ToArray() ?? Array.Empty<Attachment>();
 
         var embeds = NormalizeEmbeds(
             json.GetPropertyOrNull("embeds")?.EnumerateArrayOrNull()?.Select(Embed.Parse).ToArray()
-                ?? []
+                ?? Array.Empty<Embed>()
         );
 
         var stickers =
             json.GetPropertyOrNull("sticker_items")
                 ?.EnumerateArrayOrNull()
                 ?.Select(Sticker.Parse)
-                .ToArray() ?? [];
+                .ToArray() ?? Array.Empty<Sticker>();
 
         var reactions =
             json.GetPropertyOrNull("reactions")
                 ?.EnumerateArrayOrNull()
                 ?.Select(Reaction.Parse)
-                .ToArray() ?? [];
+                .ToArray() ?? Array.Empty<Reaction>();
 
         var mentionedUsers =
             json.GetPropertyOrNull("mentions")?.EnumerateArrayOrNull()?.Select(User.Parse).ToArray()
-            ?? [];
+            ?? Array.Empty<User>();
 
         var messageReference = json.GetPropertyOrNull("message_reference")
             ?.Pipe(MessageReference.Parse);

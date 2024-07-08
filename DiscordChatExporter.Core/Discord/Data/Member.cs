@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Text.Json;
 using DiscordChatExporter.Core.Discord.Data.Common;
@@ -20,7 +21,8 @@ public partial record Member(
 
 public partial record Member
 {
-    public static Member CreateFallback(User user) => new(user, null, null, []);
+    public static Member CreateFallback(User user) =>
+        new(user, null, null, Array.Empty<Snowflake>());
 
     public static Member Parse(JsonElement json, Snowflake? guildId = null)
     {
@@ -32,7 +34,7 @@ public partial record Member
                 ?.EnumerateArray()
                 .Select(j => j.GetNonWhiteSpaceString())
                 .Select(Snowflake.Parse)
-                .ToArray() ?? [];
+                .ToArray() ?? Array.Empty<Snowflake>();
 
         var avatarUrl = guildId is not null
             ? json.GetPropertyOrNull("avatar")
