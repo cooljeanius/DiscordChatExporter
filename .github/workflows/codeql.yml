@@ -84,7 +84,8 @@ jobs:
     # to build your code.
     # Command-line programs to run using the OS shell; see:
     # https://docs.github.com/en/actions/using-workflows/workflow-syntax-for-github-actions#jobsjob_idstepsrun
-    - if: matrix.build-mode == 'manual'
+    - name: Manual build message
+      if: matrix.build-mode == 'manual'
       shell: bash
       run: |
         echo ''
