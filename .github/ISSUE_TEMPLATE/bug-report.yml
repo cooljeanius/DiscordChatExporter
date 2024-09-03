@@ -1,4 +1,5 @@
-name: 🐛 Bug report
+---
+name: Bug report
 description: Report broken functionality.
 labels: [bug]
 
@@ -6,17 +7,24 @@ body:
   - type: markdown
     attributes:
       value: |
-        - Avoid generic or vague titles such as "Something's not working" or "A couple of problems" — be as descriptive as possible.
-        - Keep your issue focused on one single problem. If you have multiple bug reports, please create a separate issue for each of them.
-        - Issues should represent **complete and actionable** work items. If you are unsure about something or have a question, please start a [discussion](https://github.com/Tyrrrz/DiscordChatExporter/discussions/new) instead.
-        - Remember that **DiscordChatExporter** is an open-source project funded by the community. If you find it useful, **please consider [donating](https://tyrrrz.me/donate) to support its development**.
+        - Avoid generic or vague titles such as "Something's not working" or
+          "A couple of problems" — be as descriptive as possible.
+        - Keep your issue focused on 1 single problem. If you have multiple bug
+          reports, please create a separate issue for each of them.
+        - Issues should represent **complete and actionable** work items.
+          If you are unsure about something or have a question, please start a
+          [discussion](https://github.com/Tyrrrz/DiscordChatExporter/discussions/new)
+          instead.
+        - Remember that **DiscordChatExporter** is an open-source project
+          funded by the community. If you find it useful, **please consider
+          [donating](https://tyrrrz.me/donate) to support its development**.
 
         ___
 
   - type: input
     attributes:
       label: Version
-      description: Which version of the application does this bug affect? Make sure you're not using an outdated version.
+      description: Which version of the application does this bug affect? Make sure your version is up-to-date.
       placeholder: v1.0.0
     validations:
       required: true
@@ -55,9 +63,14 @@ body:
     attributes:
       label: Steps to reproduce
       description: >
-        Minimum steps required to reproduce the bug, including prerequisites, export settings, or other relevant items.
-        The information provided in this field must be readily actionable, meaning that anyone should be able to reproduce the bug by following these steps.
-        If the bug depends on external factors (such as a specific server, channel, or message), then this field must include the server invite and the corresponding link.
+        Minimum steps required to reproduce the bug, including prerequisites,
+        export settings, or other relevant items.
+        The information provided in this field must be readily actionable,
+        meaning that anyone should be able to reproduce the bug by following
+        these steps.
+        If the bug depends on external factors (such as a specific server,
+        channel, or message), then this field must include the server invite
+        and the corresponding link.
       placeholder: |
         Server invite: https://discord.gg/...
         Channel or message link: https://discord.com/channels/.../...
@@ -78,7 +91,7 @@ body:
   - type: textarea
     attributes:
       label: Details
-      description: Clear and thorough explanation of the bug, including any additional information you may find relevant.
+      description: Clear & thorough explanation of the bug, including any additional info you may find relevant.
       placeholder: |
         - Expected behavior: ...
         - Actual behavior: ...
@@ -106,4 +119,8 @@ body:
   - type: markdown
     attributes:
       value: |
-        If you are struggling to provide actionable reproduction steps, or if something else is preventing you from creating a complete bug report, please start a [discussion](https://github.com/Tyrrrz/DiscordChatExporter/discussions/new) instead.
+        If you are struggling to provide actionable reproduction steps, or if
+        something else is preventing you from creating a complete bug report,
+        please start a
+        [discussion](https://github.com/Tyrrrz/DiscordChatExporter/discussions/new)
+        instead.
