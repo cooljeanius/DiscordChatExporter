@@ -19,6 +19,9 @@
   </ItemGroup>
 
   <ItemGroup>
+    <PackageReference Include="Polly" Version="8.6.3" />
+    <PackageReference Include="RazorBlade" Version="0.10.0" />
+  <PackageReference Include="Superpower" Version="3.1.0" />
     <ProjectReference Include="..\DiscordChatExporter.Core\DiscordChatExporter.Core.csproj" />
   </ItemGroup>
 
