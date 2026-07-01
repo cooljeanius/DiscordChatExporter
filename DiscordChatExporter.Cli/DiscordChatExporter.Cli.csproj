@@ -12,10 +12,10 @@
   <ItemGroup>
     <PackageReference Include="CliFx" Version="2.3.6" />
     <PackageReference Include="CSharpier.MsBuild" Version="0.25.0" PrivateAssets="all" />
-    <PackageReference Include="Deorcify" Version="1.1.0" PrivateAssets="all" />
+    <PackageReference Include="Deorcify" Version="2.0.1" PrivateAssets="all" />
     <PackageReference Include="DotnetRuntimeBootstrapper" Version="2.5.4" PrivateAssets="all" />
     <PackageReference Include="Gress" Version="2.2.0" />
-    <PackageReference Include="Spectre.Console" Version="0.55.2" />
+    <PackageReference Include="Spectre.Console" Version="0.57.1" />
   </ItemGroup>
 
   <ItemGroup>
