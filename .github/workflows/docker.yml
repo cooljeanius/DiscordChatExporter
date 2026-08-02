@@ -19,6 +19,7 @@ jobs:
 
       - name: Build image
         run: >
+          set -x;
           docker buildx build
           --file DiscordChatExporter.Cli.dockerfile
           --platform linux/amd64,linux/arm64
