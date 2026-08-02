@@ -29,21 +29,20 @@ Type the following command in your terminal of choice, then press ENTER to run i
 > **Note**:
 > On Windows, if you're using the default Command Prompt (`cmd`), omit the leading `./` at the start of the command.
 
-
 > **Docker** users, please refer to the [Docker usage instructions](Docker.md).
 
 ## CLI commands
 
-| Command                 | Description                                          |
-|-------------------------|------------------------------------------------------|
-| export                  | Exports a channel                                    |
-| exportdm                | Exports all direct message channels                  |
-| exportguild             | Exports all channels within the specified server     |
-| exportall               | Exports all accessible channels                      |
-| channels                | Outputs the list of channels in the given server     |
-| dm                      | Outputs the list of direct message channels          |
-| guilds                  | Outputs the list of accessible servers               |
-| guide                   | Explains how to obtain token, server, and channel ID |
+| Command     | Description                                          |
+| ----------- | ---------------------------------------------------- |
+| export      | Exports a channel                                    |
+| exportdm    | Exports all direct message channels                  |
+| exportguild | Exports all channels within the specified server     |
+| exportall   | Exports all accessible channels                      |
+| channels    | Outputs the list of channels in the given server     |
+| dm          | Outputs the list of direct message channels          |
+| guilds      | Outputs the list of accessible servers               |
+| guide       | Explains how to obtain token, server, and channel ID |
 
 To use the commands, you'll need a token. For the instructions on how to get a token, please refer to [this page](Token-and-IDs.md), or run `./DiscordChatExporter.Cli guide`.
 
@@ -78,7 +77,7 @@ format is `HtmlDark`.
 
 #### Changing the output filename
 
-You can change the filename by using `-o name.ext`. e.g. for the `HTML` format:
+You can change the filename by using `-o name.ext`. e.g., for the `HTML` format:
 
 ```console
 ./DiscordChatExporter.Cli export -t "mfa.Ifrn" -c 53555 -o myserver.html
@@ -187,21 +186,21 @@ locales. The default locale is `en-US`.
 #### Date ranges
 
 **Messages sent before a date**
-Use `--before` to export messages sent before the provided date. E.g. messages sent before September 18th, 2019:
+Use `--before` to export messages sent before the provided date. e.g., messages sent before September 18th, 2019:
 
 ```console
 ./DiscordChatExporter.Cli export -t "mfa.Ifrn" -c 53555 --before 2019-09-18
 ```
 
 **Messages sent after a date**
-Use `--after` to export messages sent after the provided date. E.g. messages sent after September 17th, 2019 11:34 PM:
+Use `--after` to export messages sent after the provided date. e.g., messages sent after September 17th, 2019 11:34 PM:
 
 ```console
 ./DiscordChatExporter.Cli export -t "mfa.Ifrn" -c 53555 --after "2019-09-17 23:34"
 ```
 
 **Messages sent in a date range**
-Use `--before` and `--after` to export messages sent during the provided date range. E.g. messages sent between
+Use `--before` and `--after` to export messages sent during the provided date range. e.g., messages sent between
 September 17th, 2019 11:34 PM and September 18th:
 
 ```console
@@ -222,7 +221,7 @@ Use `--filter` to filter what messages are included in the export.
 ./DiscordChatExporter.Cli export -t "mfa.Ifrn" -c 53555 --filter "from:Tyrrrz has:image"
 ```
 
-Documentation on message filter syntax can be found [here](https://github.com/Tyrrrz/DiscordChatExporter/blob/master/.docs/Message-filters.md).
+Documentation on message filter syntax can be found [here](https://github.com/Tyrrrz/DiscordChatExporter/blob/prime/.docs/Message-filters.md).
 
 ### Export channels from a specific server
 

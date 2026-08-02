@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -10,68 +10,75 @@ using DiscordChatExporter.Core.Discord.Data;
 using DiscordChatExporter.Core.Exporting;
 using DiscordChatExporter.Core.Exporting.Filtering;
 using DiscordChatExporter.Core.Exporting.Partitioning;
-using DiscordChatExporter.Core.Utils.Extensions;
 using DiscordChatExporter.Gui.Framework;
+using DiscordChatExporter.Gui.Localization;
 using DiscordChatExporter.Gui.Services;
+using PowerKit.Extensions;
 
 namespace DiscordChatExporter.Gui.ViewModels.Dialogs;
 
 public partial class ExportSetupViewModel(
     DialogManager dialogManager,
-    SettingsService settingsService
+    SettingsService settingsService,
+    LocalizationManager localizationManager
 ) : DialogViewModelBase
 {
+    public LocalizationManager LocalizationManager { get; } = localizationManager;
+
     [ObservableProperty]
-    private Guild? _guild;
+    public partial Guild? Guild { get; set; }
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(IsSingleChannel))]
-    private IReadOnlyList<Channel>? _channels;
+    public partial IReadOnlyList<Channel>? Channels { get; set; }
 
     [ObservableProperty]
-    private string? _outputPath;
+    public partial string? OutputPath { get; set; }
 
     [ObservableProperty]
-    private ExportFormat _selectedFormat;
+    public partial ExportFormat SelectedFormat { get; set; }
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(IsAfterDateSet))]
     [NotifyPropertyChangedFor(nameof(After))]
-    private DateTimeOffset? _afterDate;
+    public partial DateTimeOffset? AfterDate { get; set; }
 
     [ObservableProperty]
-    private TimeSpan? _afterTime;
+    public partial TimeSpan? AfterTime { get; set; }
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(IsBeforeDateSet))]
     [NotifyPropertyChangedFor(nameof(Before))]
-    private DateTimeOffset? _beforeDate;
+    public partial DateTimeOffset? BeforeDate { get; set; }
 
     [ObservableProperty]
-    private TimeSpan? _beforeTime;
+    public partial TimeSpan? BeforeTime { get; set; }
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(PartitionLimit))]
-    private string? _partitionLimitValue;
+    public partial string? PartitionLimitValue { get; set; }
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(MessageFilter))]
-    private string? _messageFilterValue;
+    public partial string? MessageFilterValue { get; set; }
 
     [ObservableProperty]
-    private bool _shouldFormatMarkdown;
+    public partial bool IsReverseMessageOrder { get; set; }
 
     [ObservableProperty]
-    private bool _shouldDownloadAssets;
+    public partial bool ShouldFormatMarkdown { get; set; }
 
     [ObservableProperty]
-    private bool _shouldReuseAssets;
+    public partial bool ShouldDownloadAssets { get; set; }
 
     [ObservableProperty]
-    private string? _assetsDirPath;
+    public partial bool ShouldReuseAssets { get; set; }
 
     [ObservableProperty]
-    private bool _isAdvancedSectionDisplayed;
+    public partial string? AssetsDirPath { get; set; }
+
+    [ObservableProperty]
+    public partial bool IsAdvancedSectionDisplayed { get; set; }
 
     public bool IsSingleChannel => Channels?.Count == 1;
 
@@ -95,13 +102,13 @@ public partial class ExportSetupViewModel(
             ? MessageFilter.Parse(MessageFilterValue)
             : MessageFilter.Null;
 
-    [RelayCommand]
-    private void Initialize()
+    public override Task InitializeAsync()
     {
         // Persist preferences
         SelectedFormat = settingsService.LastExportFormat;
         PartitionLimitValue = settingsService.LastPartitionLimitValue;
         MessageFilterValue = settingsService.LastMessageFilterValue;
+        IsReverseMessageOrder = settingsService.LastIsReverseMessageOrder;
         ShouldFormatMarkdown = settingsService.LastShouldFormatMarkdown;
         ShouldDownloadAssets = settingsService.LastShouldDownloadAssets;
         ShouldReuseAssets = settingsService.LastShouldReuseAssets;
@@ -116,7 +123,10 @@ public partial class ExportSetupViewModel(
             || !string.IsNullOrWhiteSpace(MessageFilterValue)
             || ShouldDownloadAssets
             || ShouldReuseAssets
-            || !string.IsNullOrWhiteSpace(AssetsDirPath);
+            || !string.IsNullOrWhiteSpace(AssetsDirPath)
+            || IsReverseMessageOrder;
+
+        return Task.CompletedTask;
     }
 
     [RelayCommand]
@@ -180,6 +190,7 @@ public partial class ExportSetupViewModel(
         settingsService.LastExportFormat = SelectedFormat;
         settingsService.LastPartitionLimitValue = PartitionLimitValue;
         settingsService.LastMessageFilterValue = MessageFilterValue;
+        settingsService.LastIsReverseMessageOrder = IsReverseMessageOrder;
         settingsService.LastShouldFormatMarkdown = ShouldFormatMarkdown;
         settingsService.LastShouldDownloadAssets = ShouldDownloadAssets;
         settingsService.LastShouldReuseAssets = ShouldReuseAssets;

@@ -1,9 +1,9 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using System.Linq;
 using System.Text.Json;
 using DiscordChatExporter.Core.Discord.Data.Common;
-using DiscordChatExporter.Core.Utils.Extensions;
 using JsonExtensions.Reading;
+using PowerKit.Extensions;
 
 namespace DiscordChatExporter.Core.Discord.Data;
 
@@ -15,7 +15,7 @@ public partial record Member(
     IReadOnlyList<Snowflake> RoleIds
 ) : IHasId
 {
-    public Snowflake Id => User.Id;
+    public Snowflake Id { get; } = User.Id;
 }
 
 public partial record Member
@@ -32,7 +32,8 @@ public partial record Member
                 ?.EnumerateArray()
                 .Select(j => j.GetNonWhiteSpaceString())
                 .Select(Snowflake.Parse)
-                .ToArray() ?? [];
+                .ToArray()
+            ?? [];
 
         var avatarUrl = guildId is not null
             ? json.GetPropertyOrNull("avatar")

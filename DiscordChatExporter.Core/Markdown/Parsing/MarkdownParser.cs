@@ -1,11 +1,11 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
 using System.Text.RegularExpressions;
 using DiscordChatExporter.Core.Discord;
 using DiscordChatExporter.Core.Utils;
-using DiscordChatExporter.Core.Utils.Extensions;
+using PowerKit.Extensions;
 
 namespace DiscordChatExporter.Core.Markdown.Parsing;
 
@@ -208,53 +208,18 @@ internal static partial class MarkdownParser
     private static readonly IMatcher<MarkdownContext, MarkdownNode> StandardEmojiNodeMatcher =
         new RegexMatcher<MarkdownContext, MarkdownNode>(
             new Regex(
-                @"("
-                    +
-                    // Country flag emoji (two regional indicator surrogate pairs)
-                    @"(?:\uD83C[\uDDE6-\uDDFF]){2}|"
-                    +
-                    // Digit emoji (digit followed by enclosing mark)
-                    @"\d\p{Me}|"
-                    +
-                    // Surrogate pair
-                    @"\p{Cs}{2}|"
-                    +
-                    // Miscellaneous characters
-                    @"["
-                    + @"\u2600-\u2604"
-                    + @"\u260E\u2611"
-                    + @"\u2614-\u2615"
-                    + @"\u2618\u261D\u2620"
-                    + @"\u2622-\u2623"
-                    + @"\u2626\u262A"
-                    + @"\u262E-\u262F"
-                    + @"\u2638-\u263A"
-                    + @"\u2640\u2642"
-                    + @"\u2648-\u2653"
-                    + @"\u265F-\u2660"
-                    + @"\u2663"
-                    + @"\u2665-\u2666"
-                    + @"\u2668\u267B"
-                    + @"\u267E-\u267F"
-                    + @"\u2692-\u2697"
-                    + @"\u2699"
-                    + @"\u269B-\u269C"
-                    + @"\u26A0-\u26A1"
-                    + @"\u26A7"
-                    + @"\u26AA-\u26AB"
-                    + @"\u26B0-\u26B1"
-                    + @"\u26BD-\u26BE"
-                    + @"\u26C4-\u26C5"
-                    + @"\u26C8"
-                    + @"\u26CE-\u26CF"
-                    + @"\u26D1"
-                    + @"\u26D3-\u26D4"
-                    + @"\u26E9-\u26EA"
-                    + @"\u26F0-\u26F5"
-                    + @"\u26F7-\u26FA"
-                    + @"\u26FD"
-                    + @"]"
-                    + @")",
+                // Build a pattern from all known emoji, sorted longest-first so that compound
+                // emoji (e.g., sequences with ZWJ or skin-tone modifiers) are matched before
+                // their individual components.
+                "("
+                    + string.Join(
+                        "|",
+                        EmojiIndex
+                            .GetAllNames()
+                            .OrderByDescending(e => e.Length)
+                            .Select(Regex.Escape)
+                    )
+                    + ")",
                 DefaultRegexOptions
             ),
             (_, _, m) => new EmojiNode(m.Groups[1].Value)
@@ -299,7 +264,7 @@ internal static partial class MarkdownParser
     private static readonly IMatcher<MarkdownContext, MarkdownNode> MaskedLinkNodeMatcher =
         new RegexMatcher<MarkdownContext, MarkdownNode>(
             // Capture [title](link)
-            new Regex(@"\[(.+?)\]\((.+?)\)", DefaultRegexOptions),
+            new Regex(@"\[(.+?)\]\((https?://\S*[^\.,:;""'\s])\)", DefaultRegexOptions),
             (c, s, m) => new LinkNode(m.Groups[2].Value, Parse(c, s.Relocate(m.Groups[1])))
         );
 
@@ -310,7 +275,7 @@ internal static partial class MarkdownParser
             // Capture the shrug kaomoji.
             // This escapes it from matching for formatting.
             @"¯\_(ツ)_/¯",
-            (s, _) => new TextNode(s.ToString())
+            (_, s) => new TextNode(s.ToString())
         );
 
     private static readonly IMatcher<MarkdownContext, MarkdownNode> IgnoredEmojiTextNodeMatcher =
@@ -443,7 +408,7 @@ internal static partial class MarkdownParser
             TimestampNodeMatcher
         );
 
-    // Minimal set of matchers for non-multimedia formats (e.g. plain text)
+    // Minimal set of matchers for non-multimedia formats (e.g., plain text)
     private static readonly IMatcher<MarkdownContext, MarkdownNode> MinimalNodeMatcher =
         new AggregateMatcher<MarkdownContext, MarkdownNode>(
             // Mentions
@@ -484,6 +449,37 @@ internal static partial class MarkdownParser
 
 internal static partial class MarkdownParser
 {
+    private static void Extract<TNode>(
+        IEnumerable<MarkdownNode> nodes,
+        ICollection<TNode> extractedNodes
+    )
+        where TNode : MarkdownNode
+    {
+        foreach (var node in nodes)
+        {
+            if (node is TNode extractedNode)
+                extractedNodes.Add(extractedNode);
+
+            if (node is IContainerNode containerNode)
+                Extract(containerNode.Children, extractedNodes);
+        }
+    }
+
+    public static IReadOnlyList<TNode> Extract<TNode>(string markdown)
+        where TNode : MarkdownNode
+    {
+        var extractedNodes = new List<TNode>();
+        Extract(Parse(markdown), extractedNodes);
+
+        return extractedNodes;
+    }
+
+    public static IReadOnlyList<LinkNode> ExtractLinks(string markdown) =>
+        Extract<LinkNode>(markdown);
+
+    public static IReadOnlyList<EmojiNode> ExtractEmojis(string markdown) =>
+        Extract<EmojiNode>(markdown);
+
     private static IReadOnlyList<MarkdownNode> Parse(
         MarkdownContext context,
         StringSegment segment
@@ -499,24 +495,4 @@ internal static partial class MarkdownParser
 
     public static IReadOnlyList<MarkdownNode> ParseMinimal(string markdown) =>
         ParseMinimal(new MarkdownContext(), new StringSegment(markdown));
-
-    private static void ExtractLinks(IEnumerable<MarkdownNode> nodes, ICollection<LinkNode> links)
-    {
-        foreach (var node in nodes)
-        {
-            if (node is LinkNode linkNode)
-                links.Add(linkNode);
-
-            if (node is IContainerNode containerNode)
-                ExtractLinks(containerNode.Children, links);
-        }
-    }
-
-    public static IReadOnlyList<LinkNode> ExtractLinks(string markdown)
-    {
-        var links = new List<LinkNode>();
-        ExtractLinks(Parse(markdown), links);
-
-        return links;
-    }
 }

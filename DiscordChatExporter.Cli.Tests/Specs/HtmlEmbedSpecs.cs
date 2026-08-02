@@ -1,11 +1,11 @@
-﻿using System;
+using System;
 using System.Linq;
 using System.Threading.Tasks;
 using AngleSharp.Dom;
 using DiscordChatExporter.Cli.Tests.Infra;
 using DiscordChatExporter.Core.Discord;
-using DiscordChatExporter.Core.Utils.Extensions;
 using FluentAssertions;
+using PowerKit.Extensions;
 using Xunit;
 
 namespace DiscordChatExporter.Cli.Tests.Specs;
@@ -181,8 +181,14 @@ public class HtmlEmbedSpecs
         );
 
         // Assert
-        var iframeUrl = message.QuerySelector("iframe")?.GetAttribute("src");
-        iframeUrl.Should().StartWith("https://www.youtube.com/embed/qOWW4OlgbvE");
+        // Check that the YouTube video thumbnail image exists with the correct video ID
+        var youtubeThumbnailSrc = message
+            .QuerySelectorAll("img")
+            .Select(e => e.GetAttribute("src"))
+            .WhereNotNull()
+            .FirstOrDefault(s => s.Contains("qOWW4OlgbvE", StringComparison.Ordinal));
+
+        youtubeThumbnailSrc.Should().NotBeNull();
     }
 
     [Fact]

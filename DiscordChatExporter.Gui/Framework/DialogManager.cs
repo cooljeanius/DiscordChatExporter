@@ -1,9 +1,9 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
-using AsyncKeyedLock;
 using Avalonia;
 using Avalonia.Platform.Storage;
 using DialogHostAvalonia;
@@ -13,11 +13,12 @@ namespace DiscordChatExporter.Gui.Framework;
 
 public class DialogManager : IDisposable
 {
-    private readonly AsyncNonKeyedLocker _dialogLock = new();
+    private readonly SemaphoreSlim _dialogLock = new(1, 1);
 
     public async Task<T?> ShowDialogAsync<T>(DialogViewModelBase<T> dialog)
     {
-        using (await _dialogLock.LockAsync())
+        await _dialogLock.WaitAsync();
+        try
         {
             await DialogHost.Show(
                 dialog,
@@ -38,7 +39,15 @@ public class DialogManager : IDisposable
                 }
             );
 
+            // Yield to allow DialogHost to fully reset its state before
+            // another dialog is shown (e.g., when dialogs are shown sequentially).
+            await Task.Yield();
+
             return dialog.DialogResult;
+        }
+        finally
+        {
+            _dialogLock.Release();
         }
     }
 
@@ -60,7 +69,7 @@ public class DialogManager : IDisposable
             }
         );
 
-        return file?.Path.LocalPath;
+        return file?.TryGetLocalPath() ?? file?.Path.ToString();
     }
 
     public async Task<string?> PromptDirectoryPathAsync(string defaultDirPath = "")
@@ -69,19 +78,21 @@ public class DialogManager : IDisposable
             Application.Current?.ApplicationLifetime?.TryGetTopLevel()
             ?? throw new ApplicationException("Could not find the top-level visual element.");
 
-        var startLocation = await topLevel.StorageProvider.TryGetFolderFromPathAsync(
-            defaultDirPath
-        );
-
-        var folderPickResult = await topLevel.StorageProvider.OpenFolderPickerAsync(
+        var result = await topLevel.StorageProvider.OpenFolderPickerAsync(
             new FolderPickerOpenOptions
             {
                 AllowMultiple = false,
-                SuggestedStartLocation = startLocation,
+                SuggestedStartLocation = await topLevel.StorageProvider.TryGetFolderFromPathAsync(
+                    defaultDirPath
+                ),
             }
         );
 
-        return folderPickResult.FirstOrDefault()?.Path.LocalPath;
+        var directory = result.FirstOrDefault();
+        if (directory is null)
+            return null;
+
+        return directory.TryGetLocalPath() ?? directory.Path.ToString();
     }
 
     public void Dispose() => _dialogLock.Dispose();

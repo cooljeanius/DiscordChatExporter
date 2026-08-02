@@ -1,10 +1,10 @@
-﻿using System.Text.RegularExpressions;
+using System.Text.RegularExpressions;
 
 namespace DiscordChatExporter.Core.Discord.Data.Embeds;
 
 public partial record TwitchClipEmbedProjection(string ClipId)
 {
-    public string Url => $"https://clips.twitch.tv/embed?clip={ClipId}&parent=localhost";
+    public string Url { get; } = $"https://clips.twitch.tv/embed?clip={ClipId}&parent=localhost";
 }
 
 public partial record TwitchClipEmbedProjection

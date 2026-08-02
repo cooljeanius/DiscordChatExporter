@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 
 namespace DiscordChatExporter.Core.Markdown.Parsing;
@@ -14,7 +14,7 @@ internal static class MatcherExtensions
         this IMatcher<TContext, TValue> matcher,
         TContext context,
         StringSegment segment,
-        Func<TContext, StringSegment, TValue> transformFallback
+        Func<TContext, StringSegment, TValue> fallbackTransform
     )
     {
         // Loop through segments divided by individual matches
@@ -40,7 +40,7 @@ internal static class MatcherExtensions
 
                 yield return new ParsedMatch<TValue>(
                     fallbackSegment,
-                    transformFallback(context, fallbackSegment)
+                    fallbackTransform(context, fallbackSegment)
                 );
             }
 
@@ -57,7 +57,7 @@ internal static class MatcherExtensions
 
             yield return new ParsedMatch<TValue>(
                 fallbackSegment,
-                transformFallback(context, fallbackSegment)
+                fallbackTransform(context, fallbackSegment)
             );
         }
     }

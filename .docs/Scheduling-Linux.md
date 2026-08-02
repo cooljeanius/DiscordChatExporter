@@ -11,7 +11,7 @@
 
 ```bash
 #!/bin/bash
-# Info: https://github.com/Tyrrrz/DiscordChatExporter/blob/master/.docs
+# Info: https://github.com/Tyrrrz/DiscordChatExporter/blob/prime/.docs
 
 TOKEN=tokenhere
 CHANNELID=channelhere
@@ -64,9 +64,9 @@ exit 0
 
 - `tokenhere` with your [Token](Token-and-IDs.md).
 - `channelhere` with a [Channel ID](Token-and-IDs.md).
-- `dceFOLDERpathhere` with DCE's **directory path** (e.g. `/path/to/folder`, NOT `/path/to/folder/DiscordChatExporter.dll`).
+- `dceFOLDERpathhere` with DCE's **directory path** (e.g., `/path/to/folder`, NOT `/path/to/folder/DiscordChatExporter.dll`).
 - `filenamehere` with the exported channel's filename, without spaces.
-- `dirhere` with the export directory (e.g. /home/user/Documents/Discord\ Exports).
+- `dirhere` with the export directory (e.g., /home/user/Documents/Discord\ Exports).
 - `formathere` with one of the available export formats.
 
 > **Note**:

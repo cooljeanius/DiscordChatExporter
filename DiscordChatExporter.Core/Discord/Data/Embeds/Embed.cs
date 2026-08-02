@@ -3,8 +3,8 @@ using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
 using System.Text.Json;
-using DiscordChatExporter.Core.Utils.Extensions;
 using JsonExtensions.Reading;
+using PowerKit.Extensions;
 
 namespace DiscordChatExporter.Core.Discord.Data.Embeds;
 
@@ -45,7 +45,9 @@ public partial record Embed
         var title = json.GetPropertyOrNull("title")?.GetStringOrNull();
 
         var kind =
-            json.GetPropertyOrNull("type")?.GetStringOrNull()?.ParseEnumOrNull<EmbedKind>()
+            json.GetPropertyOrNull("type")
+                ?.GetStringOrNull()
+                .Pipe(s => Enum.ParseOrNull<EmbedKind>(s, true))
             ?? EmbedKind.Rich;
 
         var url = json.GetPropertyOrNull("url")?.GetNonWhiteSpaceStringOrNull();
@@ -54,7 +56,7 @@ public partial record Embed
         var color = json.GetPropertyOrNull("color")
             ?.GetInt32OrNull()
             ?.Pipe(System.Drawing.Color.FromArgb)
-            .ResetAlpha();
+            .WithFullAlpha();
 
         var author = json.GetPropertyOrNull("author")?.Pipe(EmbedAuthor.Parse);
         var description = json.GetPropertyOrNull("description")?.GetStringOrNull();
@@ -63,13 +65,14 @@ public partial record Embed
             json.GetPropertyOrNull("fields")
                 ?.EnumerateArrayOrNull()
                 ?.Select(EmbedField.Parse)
-                .ToArray() ?? [];
+                .ToArray()
+            ?? [];
 
         var thumbnail = json.GetPropertyOrNull("thumbnail")?.Pipe(EmbedImage.Parse);
 
         // Under the Discord API model, embeds can only have at most one image.
         // Because of that, embeds that are rendered with multiple images on the client
-        // (e.g. tweet embeds), are exposed from the API as multiple separate embeds.
+        // (e.g., tweet embeds), are exposed from the API as multiple separate embeds.
         // Our embed model is consistent with the user-facing side of Discord, so images
         // are stored as an array. The API will only ever return one image, but we deal
         // with this by merging related embeds at the end of the message parsing process.
@@ -78,7 +81,8 @@ public partial record Embed
             json.GetPropertyOrNull("image")
                 ?.Pipe(EmbedImage.Parse)
                 .ToSingletonEnumerable()
-                .ToArray() ?? [];
+                .ToArray()
+            ?? [];
 
         var video = json.GetPropertyOrNull("video")?.Pipe(EmbedVideo.Parse);
 

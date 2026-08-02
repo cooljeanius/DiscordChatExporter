@@ -5,7 +5,7 @@
 1. Open a text editor such as Notepad and paste:
 
 ```console
-# Info: https://github.com/Tyrrrz/DiscordChatExporter/blob/master/.docs
+# Info: https://github.com/Tyrrrz/DiscordChatExporter/blob/prime/.docs
 
 $TOKEN = "tokenhere"
 $CHANNEL = "channelhere"
@@ -33,9 +33,9 @@ exit
 
 - `tokenhere` with your [Token](Token-and-IDs.md)
 - `channelhere` with a [Channel ID](Token-and-IDs.md)
-- `exefolderhere` with the .exe **directory's path** (e.g. C:\Users\User\Desktop\DiscordChatExporter)
+- `exefolderhere` with the .exe **directory's path** (e.g., C:\Users\User\Desktop\DiscordChatExporter)
 - `filenamehere` with a filename without spaces
-- `dirhere` with the export directory (e.g. C:\Users\User\Documents\Exports)
+- `dirhere` with the export directory (e.g., C:\Users\User\Documents\Exports)
 - `formathere` with one of the available export formats
 
 Make sure not to delete the quotes (")

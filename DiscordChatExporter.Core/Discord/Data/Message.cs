@@ -1,11 +1,11 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.Json;
 using DiscordChatExporter.Core.Discord.Data.Common;
 using DiscordChatExporter.Core.Discord.Data.Embeds;
-using DiscordChatExporter.Core.Utils.Extensions;
 using JsonExtensions.Reading;
+using PowerKit.Extensions;
 
 namespace DiscordChatExporter.Core.Discord.Data;
 
@@ -27,22 +27,25 @@ public partial record Message(
     IReadOnlyList<User> MentionedUsers,
     MessageReference? Reference,
     Message? ReferencedMessage,
+    MessageSnapshot? ForwardedMessage,
     Interaction? Interaction
 ) : IHasId
 {
-    public bool IsSystemNotification =>
-        Kind is >= MessageKind.RecipientAdd and <= MessageKind.ThreadCreated;
-
-    public bool IsReply => Kind == MessageKind.Reply;
-
-    // App interactions are rendered as replies in the Discord client, but they are not actually replies
-    public bool IsReplyLike => IsReply || Interaction is not null;
-
-    public bool IsEmpty =>
+    public bool IsEmpty { get; } =
         string.IsNullOrWhiteSpace(Content)
         && !Attachments.Any()
         && !Embeds.Any()
         && !Stickers.Any();
+
+    public bool IsSystemNotification { get; } =
+        Kind is >= MessageKind.RecipientAdd and <= MessageKind.ThreadCreated;
+
+    public bool IsReply { get; } = Kind == MessageKind.Reply;
+
+    // App interactions are rendered as replies in the Discord client, but they are not actually replies
+    public bool IsReplyLike => IsReply || Interaction is not null;
+
+    public bool IsForwarded { get; } = Reference?.Kind == MessageReferenceKind.Forward;
 
     public IEnumerable<User> GetReferencedUsers()
     {
@@ -143,7 +146,8 @@ public partial record Message
             json.GetPropertyOrNull("attachments")
                 ?.EnumerateArrayOrNull()
                 ?.Select(Attachment.Parse)
-                .ToArray() ?? [];
+                .ToArray()
+            ?? [];
 
         var embeds = NormalizeEmbeds(
             json.GetPropertyOrNull("embeds")?.EnumerateArrayOrNull()?.Select(Embed.Parse).ToArray()
@@ -154,13 +158,15 @@ public partial record Message
             json.GetPropertyOrNull("sticker_items")
                 ?.EnumerateArrayOrNull()
                 ?.Select(Sticker.Parse)
-                .ToArray() ?? [];
+                .ToArray()
+            ?? [];
 
         var reactions =
             json.GetPropertyOrNull("reactions")
                 ?.EnumerateArrayOrNull()
                 ?.Select(Reaction.Parse)
-                .ToArray() ?? [];
+                .ToArray()
+            ?? [];
 
         var mentionedUsers =
             json.GetPropertyOrNull("mentions")?.EnumerateArrayOrNull()?.Select(User.Parse).ToArray()
@@ -168,7 +174,17 @@ public partial record Message
 
         var messageReference = json.GetPropertyOrNull("message_reference")
             ?.Pipe(MessageReference.Parse);
+
         var referencedMessage = json.GetPropertyOrNull("referenced_message")?.Pipe(Parse);
+
+        // Currently Discord only supports 1 snapshot per forward
+        var forwardedMessage = json.GetPropertyOrNull("message_snapshots")
+            ?.EnumerateArrayOrNull()
+            ?.Select(j => j.GetPropertyOrNull("message"))
+            .WhereNotNull()
+            .Select(MessageSnapshot.Parse)
+            .FirstOrDefault();
+
         var interaction = json.GetPropertyOrNull("interaction")?.Pipe(Interaction.Parse);
 
         return new Message(
@@ -188,6 +204,7 @@ public partial record Message
             mentionedUsers,
             messageReference,
             referencedMessage,
+            forwardedMessage,
             interaction
         );
     }

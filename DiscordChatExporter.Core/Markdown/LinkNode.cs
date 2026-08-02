@@ -1,8 +1,8 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 
 namespace DiscordChatExporter.Core.Markdown;
 
-// Named links can contain child nodes (e.g. [**bold URL**](https://test.com))
+// Named links can contain child nodes (e.g., [**bold URL**](https://test.com))
 internal record LinkNode(string Url, IReadOnlyList<MarkdownNode> Children)
     : MarkdownNode,
         IContainerNode

@@ -16,8 +16,8 @@ $ docker pull tyrrrz/discordchatexporter:stable
 Note the `:stable` tag. DiscordChatExporter images are tagged according to the following patterns:
 
 - `stable` — latest stable version release. This tag is updated with each release of a new project version. Recommended for personal use.
-- `x.y.z` (e.g. `2.30.1`) — specific stable version release. This tag is pushed when the corresponding version is released and never updated thereafter. Recommended for use in automation scenarios.
-- `latest` — latest (potentially unstable) build. This tag is updated with each new commit to the `master` branch. Not recommended, unless you want to test a new feature that has not been released in a stable version yet.
+- `x.y.z` (e.g., `2.30.1`) — specific stable version release. This tag is pushed when the corresponding version is released and never updated thereafter. Recommended for use in automation scenarios.
+- `latest` — latest (potentially unstable) build. This tag is updated with each new commit to the `prime` branch. Not recommended, unless you want to test a new feature that has not been released in a stable version yet.
 
 You can see all available tags [here](https://hub.docker.com/r/tyrrrz/discordchatexporter/tags?ordering=name).
 
@@ -57,7 +57,7 @@ You can also use the current working directory as the output directory by specif
 - `-v $PWD:/out` in Bash
 - `-v $pwd.Path:/out` in PowerShell
 
-For more information, please refer to the [Dockerfile](https://github.com/Tyrrrz/DiscordChatExporter/blob/master/DiscordChatExporter.Cli.dockerfile) and [Docker documentation](https://docs.docker.com/engine/reference/run).
+For more information, please refer to the [Dockerfile](https://github.com/Tyrrrz/DiscordChatExporter/blob/prime/DiscordChatExporter.Cli.dockerfile) and [Docker documentation](https://docs.docker.com/engine/reference/run).
 
 To get your Token and Channel IDs, please refer to [this page](Token-and-IDs.md).
 

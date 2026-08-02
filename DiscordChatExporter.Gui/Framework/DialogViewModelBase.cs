@@ -1,4 +1,4 @@
-﻿using System.Threading.Tasks;
+using System.Threading.Tasks;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 
@@ -6,11 +6,12 @@ namespace DiscordChatExporter.Gui.Framework;
 
 public abstract partial class DialogViewModelBase<T> : ViewModelBase
 {
-    private readonly TaskCompletionSource<T> _closeTcs =
-        new(TaskCreationOptions.RunContinuationsAsynchronously);
+    private readonly TaskCompletionSource<T> _closeTcs = new(
+        TaskCreationOptions.RunContinuationsAsynchronously
+    );
 
     [ObservableProperty]
-    private T? _dialogResult;
+    public partial T? DialogResult { get; set; }
 
     [RelayCommand]
     protected void Close(T dialogResult)

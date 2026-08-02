@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
@@ -10,14 +10,14 @@ using DiscordChatExporter.Core.Discord;
 using DiscordChatExporter.Core.Discord.Data;
 using DiscordChatExporter.Core.Exceptions;
 using DiscordChatExporter.Core.Exporting;
-using DiscordChatExporter.Core.Utils.Extensions;
 using DiscordChatExporter.Gui.Framework;
+using DiscordChatExporter.Gui.Localization;
 using DiscordChatExporter.Gui.Models;
 using DiscordChatExporter.Gui.Services;
-using DiscordChatExporter.Gui.Utils;
-using DiscordChatExporter.Gui.Utils.Extensions;
 using Gress;
 using Gress.Completable;
+using PowerKit;
+using PowerKit.Extensions;
 
 namespace DiscordChatExporter.Gui.ViewModels.Components;
 
@@ -28,81 +28,80 @@ public partial class DashboardViewModel : ViewModelBase
     private readonly DialogManager _dialogManager;
     private readonly SettingsService _settingsService;
 
-    private readonly DisposableCollector _eventRoot = new();
+    private readonly IDisposable _eventSubscription;
     private readonly AutoResetProgressMuxer _progressMuxer;
 
     private DiscordClient? _discord;
-
-    [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(IsProgressIndeterminate))]
-    [NotifyCanExecuteChangedFor(nameof(PullGuildsCommand))]
-    [NotifyCanExecuteChangedFor(nameof(PullChannelsCommand))]
-    [NotifyCanExecuteChangedFor(nameof(ExportCommand))]
-    private bool _isBusy;
-
-    [ObservableProperty]
-    [NotifyCanExecuteChangedFor(nameof(PullGuildsCommand))]
-    private string? _token;
-
-    [ObservableProperty]
-    private IReadOnlyList<Guild>? _availableGuilds;
-
-    [ObservableProperty]
-    [NotifyCanExecuteChangedFor(nameof(PullChannelsCommand))]
-    [NotifyCanExecuteChangedFor(nameof(ExportCommand))]
-    private Guild? _selectedGuild;
-
-    [ObservableProperty]
-    private IReadOnlyList<ChannelNode>? _availableChannels;
 
     public DashboardViewModel(
         ViewModelManager viewModelManager,
         DialogManager dialogManager,
         SnackbarManager snackbarManager,
-        SettingsService settingsService
+        SettingsService settingsService,
+        LocalizationManager localizationManager
     )
     {
         _viewModelManager = viewModelManager;
         _dialogManager = dialogManager;
         _snackbarManager = snackbarManager;
         _settingsService = settingsService;
+        LocalizationManager = localizationManager;
 
         _progressMuxer = Progress.CreateMuxer().WithAutoReset();
 
-        _eventRoot.Add(
+        _eventSubscription = Disposable.Merge(
             Progress.WatchProperty(
                 o => o.Current,
-                () => OnPropertyChanged(nameof(IsProgressIndeterminate))
-            )
-        );
-
-        _eventRoot.Add(
+                _ => OnPropertyChanged(nameof(IsProgressIndeterminate))
+            ),
             SelectedChannels.WatchProperty(
                 o => o.Count,
-                () => ExportCommand.NotifyCanExecuteChanged()
+                _ => ExportCommand.NotifyCanExecuteChanged()
             )
         );
     }
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(IsProgressIndeterminate))]
+    [NotifyCanExecuteChangedFor(nameof(PullGuildsCommand))]
+    [NotifyCanExecuteChangedFor(nameof(PullChannelsCommand))]
+    [NotifyCanExecuteChangedFor(nameof(ExportCommand))]
+    public partial bool IsBusy { get; set; }
+
+    public LocalizationManager LocalizationManager { get; }
 
     public ProgressContainer<Percentage> Progress { get; } = new();
 
     public bool IsProgressIndeterminate => IsBusy && Progress.Current.Fraction is <= 0 or >= 1;
 
-    public ObservableCollection<ChannelNode> SelectedChannels { get; } = [];
+    [ObservableProperty]
+    [NotifyCanExecuteChangedFor(nameof(PullGuildsCommand))]
+    public partial string? Token { get; set; }
 
-    [RelayCommand]
-    private void Initialize()
+    [ObservableProperty]
+    public partial IReadOnlyList<Guild>? AvailableGuilds { get; set; }
+
+    [ObservableProperty]
+    [NotifyCanExecuteChangedFor(nameof(PullChannelsCommand))]
+    [NotifyCanExecuteChangedFor(nameof(ExportCommand))]
+    public partial Guild? SelectedGuild { get; set; }
+
+    [ObservableProperty]
+    public partial IReadOnlyList<ChannelConnection>? AvailableChannels { get; set; }
+
+    public ObservableCollection<ChannelConnection> SelectedChannels { get; } = [];
+
+    public override Task InitializeAsync()
     {
         if (!string.IsNullOrWhiteSpace(_settingsService.LastToken))
             Token = _settingsService.LastToken;
+
+        return Task.CompletedTask;
     }
 
     [RelayCommand]
     private async Task ShowSettingsAsync() =>
-        await _dialogManager.ShowDialogAsync(_viewModelManager.CreateSettingsViewModel());
-
-    [RelayCommand]
-    private void ShowHelp() => ProcessEx.StartShellExecute(Program.ProjectDocumentationUrl);
+        await _dialogManager.ShowDialogAsync(_viewModelManager.GetSettingsViewModel());
 
     private bool CanPullGuilds() => !IsBusy && !string.IsNullOrWhiteSpace(Token);
 
@@ -123,7 +122,7 @@ public partial class DashboardViewModel : ViewModelBase
             AvailableChannels = null;
             SelectedChannels.Clear();
 
-            _discord = new DiscordClient(token);
+            _discord = new DiscordClient(token, _settingsService.RateLimitPreference);
             _settingsService.LastToken = token;
 
             var guilds = await _discord.GetUserGuildsAsync();
@@ -139,8 +138,8 @@ public partial class DashboardViewModel : ViewModelBase
         }
         catch (Exception ex)
         {
-            var dialog = _viewModelManager.CreateMessageBoxViewModel(
-                "Error pulling guilds",
+            var dialog = _viewModelManager.GetMessageBoxViewModel(
+                LocalizationManager.ErrorPullingGuildsTitle,
                 ex.ToString()
             );
 
@@ -190,7 +189,7 @@ public partial class DashboardViewModel : ViewModelBase
             }
 
             // Build a hierarchy of channels
-            var channelTree = ChannelNode.BuildTree(
+            var channelTree = ChannelConnection.BuildTree(
                 channels
                     .OrderByDescending(c => c.IsDirect ? c.LastMessageId : null)
                     .ThenBy(c => c.Position)
@@ -206,8 +205,8 @@ public partial class DashboardViewModel : ViewModelBase
         }
         catch (Exception ex)
         {
-            var dialog = _viewModelManager.CreateMessageBoxViewModel(
-                "Error pulling channels",
+            var dialog = _viewModelManager.GetMessageBoxViewModel(
+                LocalizationManager.ErrorPullingChannelsTitle,
                 ex.ToString()
             );
 
@@ -233,7 +232,7 @@ public partial class DashboardViewModel : ViewModelBase
             if (_discord is null || SelectedGuild is null || !SelectedChannels.Any())
                 return;
 
-            var dialog = _viewModelManager.CreateExportSetupViewModel(
+            var dialog = _viewModelManager.GetExportSetupViewModel(
                 SelectedGuild,
                 SelectedChannels.Select(c => c.Channel).ToArray()
             );
@@ -272,6 +271,7 @@ public partial class DashboardViewModel : ViewModelBase
                             dialog.Before?.Pipe(Snowflake.FromDate),
                             dialog.PartitionLimit,
                             dialog.MessageFilter,
+                            dialog.IsReverseMessageOrder,
                             dialog.ShouldFormatMarkdown,
                             dialog.ShouldDownloadAssets,
                             dialog.ShouldReuseAssets,
@@ -282,6 +282,10 @@ public partial class DashboardViewModel : ViewModelBase
                         await exporter.ExportChannelAsync(request, progress, cancellationToken);
 
                         Interlocked.Increment(ref successfulExportCount);
+                    }
+                    catch (ChannelEmptyException ex)
+                    {
+                        _snackbarManager.Notify(ex.Message.TrimEnd('.'));
                     }
                     catch (DiscordChatExporterException ex) when (!ex.IsFatal)
                     {
@@ -298,14 +302,17 @@ public partial class DashboardViewModel : ViewModelBase
             if (successfulExportCount > 0)
             {
                 _snackbarManager.Notify(
-                    $"Successfully exported {successfulExportCount} channel(s)"
+                    string.Format(
+                        LocalizationManager.SuccessfulExportMessage,
+                        successfulExportCount
+                    )
                 );
             }
         }
         catch (Exception ex)
         {
-            var dialog = _viewModelManager.CreateMessageBoxViewModel(
-                "Error exporting channel(s)",
+            var dialog = _viewModelManager.GetMessageBoxViewModel(
+                LocalizationManager.ErrorExportingTitle,
                 ex.ToString()
             );
 
@@ -317,18 +324,11 @@ public partial class DashboardViewModel : ViewModelBase
         }
     }
 
-    [RelayCommand]
-    private void OpenDiscord() => ProcessEx.StartShellExecute("https://discord.com/app");
-
-    [RelayCommand]
-    private void OpenDiscordDeveloperPortal() =>
-        ProcessEx.StartShellExecute("https://discord.com/developers/applications");
-
     protected override void Dispose(bool disposing)
     {
         if (disposing)
         {
-            _eventRoot.Dispose();
+            _eventSubscription.Dispose();
         }
 
         base.Dispose(disposing);

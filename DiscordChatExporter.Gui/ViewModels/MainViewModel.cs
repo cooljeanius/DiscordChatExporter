@@ -1,13 +1,10 @@
-﻿using System;
 using System.Diagnostics;
 using System.Threading.Tasks;
-using Avalonia;
-using CommunityToolkit.Mvvm.Input;
 using DiscordChatExporter.Gui.Framework;
+using DiscordChatExporter.Gui.Localization;
 using DiscordChatExporter.Gui.Services;
-using DiscordChatExporter.Gui.Utils;
-using DiscordChatExporter.Gui.Utils.Extensions;
 using DiscordChatExporter.Gui.ViewModels.Components;
+using PowerKit.Extensions;
 
 namespace DiscordChatExporter.Gui.ViewModels;
 
@@ -16,27 +13,24 @@ public partial class MainViewModel(
     DialogManager dialogManager,
     SnackbarManager snackbarManager,
     SettingsService settingsService,
-    UpdateService updateService
+    UpdateService updateService,
+    LocalizationManager localizationManager
 ) : ViewModelBase
 {
     public string Title { get; } = $"{Program.Name} v{Program.VersionString}";
 
-    public DashboardViewModel Dashboard { get; } = viewModelManager.CreateDashboardViewModel();
+    public DashboardViewModel Dashboard { get; } = viewModelManager.GetDashboardViewModel();
 
     private async Task ShowUkraineSupportMessageAsync()
     {
         if (!settingsService.IsUkraineSupportMessageEnabled)
             return;
 
-        var dialog = viewModelManager.CreateMessageBoxViewModel(
-            "Thank you for supporting Ukraine!",
-            """
-            As Russia wages a genocidal war against my country, I'm grateful to everyone who continues to stand with Ukraine in our fight for freedom.
-
-            Click LEARN MORE to find ways that you can help.
-            """,
-            "LEARN MORE",
-            "CLOSE"
+        var dialog = viewModelManager.GetMessageBoxViewModel(
+            localizationManager.UkraineSupportTitle,
+            localizationManager.UkraineSupportMessage,
+            localizationManager.LearnMoreButton,
+            localizationManager.CloseButton
         );
 
         // Disable this message in the future
@@ -44,7 +38,7 @@ public partial class MainViewModel(
         settingsService.Save();
 
         if (await dialogManager.ShowDialogAsync(dialog) == true)
-            ProcessEx.StartShellExecute("https://tyrrrz.me/ukraine?source=discordchatexporter");
+            Process.StartShellExecute("https://tyrrrz.me/ukraine?source=discordchatexporter");
     }
 
     private async Task ShowDevelopmentBuildMessageAsync()
@@ -56,19 +50,15 @@ public partial class MainViewModel(
         if (Debugger.IsAttached)
             return;
 
-        var dialog = viewModelManager.CreateMessageBoxViewModel(
-            "Unstable build warning",
-            $"""
-            You're using a development build of {Program.Name}. These builds are not thoroughly tested and may contain bugs.
-
-            Auto-updates are disabled for development builds. If you want to switch to a stable release, please download it manually.
-            """,
-            "SEE RELEASES",
-            "CLOSE"
+        var dialog = viewModelManager.GetMessageBoxViewModel(
+            localizationManager.UnstableBuildTitle,
+            string.Format(localizationManager.UnstableBuildMessage, Program.Name),
+            localizationManager.SeeReleasesButton,
+            localizationManager.CloseButton
         );
 
         if (await dialogManager.ShowDialogAsync(dialog) == true)
-            ProcessEx.StartShellExecute(Program.ProjectReleasesUrl);
+            Process.StartShellExecute(Program.ProjectReleasesUrl);
     }
 
     private async Task CheckForUpdatesAsync()
@@ -79,30 +69,34 @@ public partial class MainViewModel(
             if (updateVersion is null)
                 return;
 
-            snackbarManager.Notify($"Downloading update to {Program.Name} v{updateVersion}...");
+            snackbarManager.Notify(
+                string.Format(
+                    localizationManager.UpdateDownloadingMessage,
+                    Program.Name,
+                    updateVersion
+                )
+            );
             await updateService.PrepareUpdateAsync(updateVersion);
 
             snackbarManager.Notify(
-                "Update has been downloaded and will be installed when you exit",
-                "INSTALL NOW",
+                localizationManager.UpdateReadyMessage,
+                localizationManager.UpdateInstallNowButton,
                 () =>
                 {
                     updateService.FinalizeUpdate(true);
 
-                    if (Application.Current?.ApplicationLifetime?.TryShutdown(2) != true)
-                        Environment.Exit(2);
+                    App.Shutdown(2);
                 }
             );
         }
         catch
         {
             // Failure to update shouldn't crash the application
-            snackbarManager.Notify("Failed to perform application update");
+            snackbarManager.Notify(localizationManager.UpdateFailedMessage);
         }
     }
 
-    [RelayCommand]
-    private async Task InitializeAsync()
+    public override async Task InitializeAsync()
     {
         await ShowUkraineSupportMessageAsync();
         await ShowDevelopmentBuildMessageAsync();

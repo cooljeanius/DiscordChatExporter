@@ -1,11 +1,12 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
-using DiscordChatExporter.Core.Utils.Extensions;
+using DiscordChatExporter.Core.Discord;
 using DiscordChatExporter.Gui.Framework;
+using DiscordChatExporter.Gui.Localization;
 using DiscordChatExporter.Gui.Models;
 using DiscordChatExporter.Gui.Services;
-using DiscordChatExporter.Gui.Utils;
-using DiscordChatExporter.Gui.Utils.Extensions;
+using PowerKit;
+using PowerKit.Extensions;
 
 namespace DiscordChatExporter.Gui.ViewModels.Dialogs;
 
@@ -13,14 +14,22 @@ public class SettingsViewModel : DialogViewModelBase
 {
     private readonly SettingsService _settingsService;
 
-    private readonly DisposableCollector _eventRoot = new();
+    private readonly IDisposable _eventSubscription;
 
-    public SettingsViewModel(SettingsService settingsService)
+    public SettingsViewModel(
+        SettingsService settingsService,
+        LocalizationManager localizationManager
+    )
     {
         _settingsService = settingsService;
+        LocalizationManager = localizationManager;
 
-        _eventRoot.Add(_settingsService.WatchAllProperties(OnAllPropertiesChanged));
+        _eventSubscription = Disposable.Merge(
+            _settingsService.WatchAllProperties(OnAllPropertiesChanged)
+        );
     }
+
+    public LocalizationManager LocalizationManager { get; }
 
     public IReadOnlyList<ThemeVariant> AvailableThemes { get; } = Enum.GetValues<ThemeVariant>();
 
@@ -29,6 +38,17 @@ public class SettingsViewModel : DialogViewModelBase
         get => _settingsService.Theme;
         set => _settingsService.Theme = value;
     }
+
+    public IReadOnlyList<Language> AvailableLanguages { get; } = Enum.GetValues<Language>();
+
+    public Language Language
+    {
+        get => _settingsService.Language;
+        set => _settingsService.Language = value;
+    }
+
+    public bool IsAutoUpdateAvailable { get; } =
+        OperatingSystem.IsWindows() && StartOptions.Current.IsAutoUpdateAllowed;
 
     public bool IsAutoUpdateEnabled
     {
@@ -42,6 +62,15 @@ public class SettingsViewModel : DialogViewModelBase
         set => _settingsService.IsTokenPersisted = value;
     }
 
+    public IReadOnlyList<RateLimitPreference> AvailableRateLimitPreferences { get; } =
+        Enum.GetValues<RateLimitPreference>();
+
+    public RateLimitPreference RateLimitPreference
+    {
+        get => _settingsService.RateLimitPreference;
+        set => _settingsService.RateLimitPreference = value;
+    }
+
     public IReadOnlyList<ThreadInclusionMode> AvailableThreadInclusionModes { get; } =
         Enum.GetValues<ThreadInclusionMode>();
 
@@ -53,40 +82,40 @@ public class SettingsViewModel : DialogViewModelBase
 
     // These items have to be non-nullable because Avalonia ComboBox doesn't allow a null value to be selected
     public IReadOnlyList<string> AvailableLocales { get; } =
-        [
-            // Current locale (maps to null downstream)
-            "",
-            // Locales supported by the Discord app
-            "da-DK",
-            "de-DE",
-            "en-GB",
-            "en-US",
-            "es-ES",
-            "fr-FR",
-            "hr-HR",
-            "it-IT",
-            "lt-LT",
-            "hu-HU",
-            "nl-NL",
-            "no-NO",
-            "pl-PL",
-            "pt-BR",
-            "ro-RO",
-            "fi-FI",
-            "sv-SE",
-            "vi-VN",
-            "tr-TR",
-            "cs-CZ",
-            "el-GR",
-            "bg-BG",
-            "ru-RU",
-            "uk-UA",
-            "th-TH",
-            "zh-CN",
-            "ja-JP",
-            "zh-TW",
-            "ko-KR",
-        ];
+    [
+        // Current locale (maps to null downstream)
+        "",
+        // Locales supported by the Discord app
+        "da-DK",
+        "de-DE",
+        "en-GB",
+        "en-US",
+        "es-ES",
+        "fr-FR",
+        "hr-HR",
+        "it-IT",
+        "lt-LT",
+        "hu-HU",
+        "nl-NL",
+        "no-NO",
+        "pl-PL",
+        "pt-BR",
+        "ro-RO",
+        "fi-FI",
+        "sv-SE",
+        "vi-VN",
+        "tr-TR",
+        "cs-CZ",
+        "el-GR",
+        "bg-BG",
+        "ru-RU",
+        "uk-UA",
+        "th-TH",
+        "zh-CN",
+        "ja-JP",
+        "zh-TW",
+        "ko-KR",
+    ];
 
     // This has to be non-nullable because Avalonia ComboBox doesn't allow a null value to be selected
     public string Locale
@@ -112,7 +141,7 @@ public class SettingsViewModel : DialogViewModelBase
     {
         if (disposing)
         {
-            _eventRoot.Dispose();
+            _eventSubscription.Dispose();
         }
 
         base.Dispose(disposing);
