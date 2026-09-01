@@ -15,7 +15,7 @@
     <PackageReference Include="Deorcify" Version="2.0.1" PrivateAssets="all" />
     <PackageReference Include="DotnetRuntimeBootstrapper" Version="2.5.4" PrivateAssets="all" />
     <PackageReference Include="Gress" Version="2.2.0" />
-    <PackageReference Include="Spectre.Console" Version="0.57.1" />
+    <PackageReference Include="Spectre.Console" Version="0.57.2" />
   </ItemGroup>
 
   <ItemGroup>
