@@ -28,7 +28,7 @@ RUN dotnet publish DiscordChatExporter.Cli \
     --use-current-runtime \
     --arch $TARGETARCH \
     --output DiscordChatExporter.Cli/bin/publish/ || \
-    dotnet test DiscordChatExporter.Cli
+    dotnet vstest DiscordChatExporter.Cli
 
 # -- Run
 # Use `runtime-deps` instead of `runtime` because we have a self-contained assembly
